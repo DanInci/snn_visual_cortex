@@ -1,11 +1,13 @@
 from brian2 import *
+from matplotlib import pyplot as plt
 
 seed(12345)
 
 
 # TODO see how to reference this from equations
-@check_units(x=volt, result=volt)
+@check_units(x=volt, result=1)
 def sigmoid(x):
+    ### Sigmoid function params
     E_d = -38 * mV  # position control of threshold
     D_d = 6 * mV  # sharpness control of threshold
 
@@ -20,18 +22,19 @@ def run_simulation(params=None):
     # Model parameters
     ################################################################################
     ### General parameters
-    duration = 1.0 * second  # Total simulation time
+    duration = 0.3 * second  # Total simulation time
     sim_dt = 0.1 * ms  # Integrator/sampling step
-    N_sst = 2  # Number of SST neurons (inhibitory)
-    N_pv = 2  # Number of PV neurons (inhibitory)
-    N_cc = 2  # Number of CC neurons (excitatory)
-    N_cs = 2  # Number of CS neurons (excitatory)
+
+    N_sst = 10  # Number of SST neurons (inhibitory)
+    N_pv = 10  # Number of PV neurons (inhibitory)
+    N_cc = 10  # Number of CC neurons (excitatory)
+    N_cs = 10  # Number of CS neurons (excitatory)
 
     ### Neuron parameters
-    tau_S = 16 * ms
-    tau_D = 7 * ms
-    tau_SST = 20 * ms
-    tau_PV = 10 * ms
+    tau_S = 16 * ms  #
+    tau_D = 7 * ms  #
+    tau_SST = 20 * ms  #
+    tau_PV = 10 * ms  #
     tau_E = 5 * ms  # Excitatory synaptic time constant
     tau_I = 10 * ms  # Inhibitory synaptic time constant
 
@@ -46,25 +49,26 @@ def run_simulation(params=None):
 
     V_t = -50 * mV  # spiking threashold
     V_r = E_l  # reset potential
-    c_d = 2600 * pA  #
-    g_s = 1300 * pA  #
-    g_d = 1200 * pA  #
 
-    # Sigmoid function params
-    E_d = -38 * mV  # position control of threshold
-    D_d = 6 * mV  # sharpness control of threshold
+    c_d = 2600 * pA  # back-propagates somatic spikes to to the dendrites
+    g_s = 1300 * pA  # propagates dendritic regenerative activity to soma
+    g_d = 1200 * pA  # propagates dendritic regenerative activity to denderites
 
     ### Synapse parameters
     w_e = 0.05 * nS  # Excitatory synaptic conductance
     w_i = 1.0 * nS  # Inhibitory synaptic conductance
 
     ### External Input
-    g = 1 * pA
+    g = 270 * pA
     M = 1.05
-    I_ext_sst = [g, g * M]  # external input SST
-    I_ext_pv = [0 * pA, 0 * pA]  # external input PV
-    I_ext_cs = [0 * pA, 0 * pA]  # external input CS
-    I_ext_cc = [0 * pA, 0 * pA]  # external input CC
+    I_ext_sst = [g for i in range(N_sst)]
+    I_ext_pv = [g for i in range(N_sst)]
+    I_ext_cs = [0 * pA for i in range(N_sst)]
+    I_ext_cc = [0 * pA for i in range(N_sst)]
+    # I_ext_sst = [g, g*M]    # external input SST
+    # I_ext_pv = [g, g*M] # external input PV
+    # I_ext_cs = [0*pA, 0*pA] # external input CS
+    # I_ext_cc = [0*pA, 0*pA] # external input CC
 
     ################################################################################
 
@@ -75,46 +79,46 @@ def run_simulation(params=None):
 
     # Equations for SST (inhibitory) neurons
     eqs_sst_inh = '''
-        dv/dt=(-(v-E_l)/tau_SST + I/C_SST) : volt (unless refractory)
+        dv/dt = ((E_l-v)/tau_SST + I/C_SST) : volt (unless refractory)
 
-        dg_e/dt = -g_e*(1./tau_E) : siemens
-        dg_i/dt = -g_i*(1./tau_I) : siemens
+        dg_e/dt = -g_e/tau_E : siemens
+        dg_i/dt = -g_i/tau_I : siemens
 
         I = I_external + I_syn : amp
-        I_syn = g_e * (E_e - v) + g_i * (E_i - v) : amp
+        I_syn = g_e*(E_e - v) + g_i*(E_i - v) : amp
         I_external : amp
     '''
 
     # Equations for PV (inhibitory) neurons
     eqs_pv_inh = '''
-        dv/dt=(-(v-E_l)/tau_PV + I/C_PV) : volt (unless refractory)
+        dv/dt = ((E_l-v)/tau_PV + I/C_PV) : volt (unless refractory)
 
-        dg_e/dt = -g_e*(1./tau_E) : siemens
-        dg_i/dt = -g_i*(1./tau_I) : siemens
+        dg_e/dt = -g_e/tau_E : siemens
+        dg_i/dt = -g_i/tau_I : siemens
 
         I = I_external + I_syn : amp
-        I_syn = g_e * (E_e - v) + g_i * (E_i - v) : amp
+        I_syn = g_e*(E_e - v) + g_i*(E_i - v) : amp
         I_external : amp
     '''
 
     # Equations for PYR (excitatory) neurons
     eqs_exc = '''
-        dv_s/dt = (-(v_s-E_l)/tau_S + (g_s*(1/(1+exp(-(v_d-E_d)/D_d))) + I_s)/C_S) : volt (unless refractory)
+        dv_s/dt = ((E_l-v_s)/tau_S + (g_s*(1/(1+exp(-(v_d-E_d)/D_d))) + I_s)/C_S) : volt (unless refractory)
 
-        dg_es/dt = -g_es*(1./tau_E) : siemens
-        dg_is/dt = -g_is*(1./tau_I) : siemens
+        dg_es/dt = -g_es/tau_E : siemens
+        dg_is/dt = -g_is/tau_I : siemens
 
         I_s = I_external + I_syn_s : amp
-        I_syn_s = g_es * (E_e - v_s) + g_is * (E_i - v_s) : amp
+        I_syn_s = g_es*(E_e - v_s) + g_is*(E_i - v_s) : amp
         I_external : amp
 
-        dv_d/dt = (-(v_d-E_l)/tau_D + (g_d*(1/(1+exp(-(v_d-E_d)/D_d))) + c_d*K + I_d)/C_D) : volt
+        dv_d/dt = ((E_l-v_d)/tau_D + (g_d*(1/(1+exp(-(v_d-E_d)/D_d))) + c_d*K + I_d)/C_D) : volt
 
-        dg_ed/dt = -g_ed*(1./tau_E) : siemens
-        dg_id/dt = -g_id*(1./tau_I) : siemens
+        dg_ed/dt = -g_ed/tau_E : siemens
+        dg_id/dt = -g_id/tau_I : siemens
 
         I_d = I_syn_d : amp
-        I_syn_d = g_ed * (E_e - v_d) + g_id * (E_i - v_d) : amp
+        I_syn_d = g_ed*(E_e - v_d) + g_id*(E_i - v_d) : amp
         K : 1
     '''
 
@@ -123,12 +127,16 @@ def run_simulation(params=None):
                               reset='v = E_l', refractory=8.3 * ms, method='euler')
     sst_neurons.set_states({'I_external': I_ext_sst})
     sst_neurons.v = 'E_l + rand()*(V_t-E_l)'
+    sst_neurons.g_e = 'rand()*w_e'
+    sst_neurons.g_i = 'rand()*w_i'
 
     # PV Neurons
     pv_neurons = NeuronGroup(N_pv, model=eqs_pv_inh, threshold='v > V_t',
                              reset='v = E_l', refractory=8.3 * ms, method='euler')
     pv_neurons.set_states({'I_external': I_ext_pv})
     pv_neurons.v = 'E_l + rand()*(V_t-E_l)'
+    pv_neurons.g_e = 'rand()*w_e'
+    pv_neurons.g_i = 'rand()*w_i'
 
     # CS Neurons
     cs_neurons = NeuronGroup(N_cs, model=eqs_exc, threshold='v_s > V_t',
@@ -136,6 +144,8 @@ def run_simulation(params=None):
     cs_neurons.set_states({'I_external': I_ext_cs})
     cs_neurons.v_s = 'E_l + rand()*(V_t-E_l)'
     cs_neurons.v_d = -70 * mV
+    cs_neurons.g_es = cs_neurons.g_ed = 'rand()*w_e'
+    cs_neurons.g_is = cs_neurons.g_id = 'rand()*w_i'
     cs_neurons.K = 1  # TODO How to initialise this?
 
     # CC Neurons
@@ -144,6 +154,8 @@ def run_simulation(params=None):
     cc_neurons.set_states({'I_external': I_ext_cc})
     cc_neurons.v_s = 'E_l + rand()*(V_t-E_l)'
     cc_neurons.v_d = -70 * mV
+    cc_neurons.g_es = cc_neurons.g_ed = 'rand()*w_e'
+    cc_neurons.g_is = cc_neurons.g_id = 'rand()*w_i'
     cc_neurons.K = 1  # TODO How to initialise this?
 
 
@@ -153,6 +165,7 @@ def run_simulation(params=None):
 
     # CS_CS 0, CS_SST 1, CS_PV 2, SST_CS 3, PV_CS 4, CC_CC 5, CC_SST 6, CC_PV 7, SST_CC 8, PV_CC 9, CC_CS 10, SST_PV 11, SST_SST 12, PV_PV 13, PV_SST 14,
     conn_probs = [1, 0.16, 0.23, 0.18, 0.52, 0.43, 0.06, 0.26, 0.22, 0.13, 0.38, 0.09, 0.29, 0.1, 0.5, 0.14]
+    # conn_probs = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] # ALL Connected
 
     # SST <=> PV
     conn_SST_PV = Synapses(sst_neurons, pv_neurons, on_pre='g_i+=w_i', name='SST_PV')  # inhibitory
@@ -196,9 +209,15 @@ def run_simulation(params=None):
     # self connections
     conn_CSsoma_CSsoma = Synapses(cs_neurons, cs_neurons, on_pre='g_es+=w_e', name='CSsoma_CSsoma')  # excitatory
     conn_CSsoma_CSsoma.connect(p=conn_probs[0])
+    backprop_CS = Synapses(cs_neurons, cs_neurons, on_pre={'up': 'K += 1', 'down': 'K -=1'},
+                           delay={'up': 0.5 * ms, 'down': 2 * ms}, name='backprop_CS')
+    backprop_CS.connect(condition='i==j')  # Connect all CS neurons to themselves
 
     conn_CCsoma_CCsoma = Synapses(cc_neurons, cc_neurons, on_pre='g_es+=w_e', name='CCsoma_CCsoma')  # excitatory
     conn_CCsoma_CCsoma.connect(p=conn_probs[5])
+    backprop_CC = Synapses(cc_neurons, cc_neurons, on_pre={'up': 'K += 1', 'down': 'K -=1'},
+                           delay={'up': 0.5 * ms, 'down': 2 * ms}, name='backprop_CC')
+    backprop_CC.connect(condition='i==j')  # Connect all CC neurons to themselves
 
     conn_SST_SST = Synapses(sst_neurons, sst_neurons, on_pre='g_i+=w_i', name='SST_SST')  # inhibitory
     conn_SST_SST.connect(p=conn_probs[12])
@@ -219,13 +238,11 @@ def run_simulation(params=None):
     # # Monitors
     # ##############################################################################
 
-    # TODO What to monitor exactly?
-
     # Record spikes of different neuron groups
     spike_mon_sst = SpikeMonitor(sst_neurons)
     spike_mon_pv = SpikeMonitor(pv_neurons)
     spike_mon_cs = SpikeMonitor(cs_neurons)
-    spike_mon_c = SpikeMonitor(cc_neurons)
+    spike_mon_cc = SpikeMonitor(cc_neurons)
 
     # Record conductances and membrane potential of neuron ni
     state_mon_sst = StateMonitor(sst_neurons, ['v', 'g_e', 'g_i'], record=[0])
@@ -236,9 +253,121 @@ def run_simulation(params=None):
     # ##############################################################################
     # # Simulation run
     # ##############################################################################
+
+    defaultclock.dt = sim_dt
+
     run(duration, report='text')
 
-    # TODO Fancy plots
+    ################################################################################
+    # Analysis and plotting
+    ################################################################################
+
+    # Raster plot
+
+    plot(spike_mon_cs.t / ms, spike_mon_cs.i, '.b', label='CS')
+    plot(spike_mon_cc.t / ms, spike_mon_cc.i, '.r', label='CC')
+    plot(spike_mon_sst.t / ms, spike_mon_sst.i, '.g', label='SST')
+    plot(spike_mon_pv.t / ms, spike_mon_pv.i, '.y', label='PV')
+    xlabel('Time (ms)')
+    ylabel('Neuron index');
+    legend(loc='best')
+
+    # CS Neurons plot
+
+    figure(figsize=(18, 4))
+    subplot(1, 2, 1)
+    plot(state_mon_cs.t / ms, state_mon_cs.v_s[0], label='v_s')
+    plot(state_mon_cs.t / ms, state_mon_cs.v_d[0], label='v_d')
+    for (t, i) in zip(spike_mon_cs.t, spike_mon_cs.i):
+        if i == 0:
+            axvline(t / ms, ls='--', c='C1', lw=1)
+    axhline(V_t / mV / 1000, ls=':', c='C2', lw=3, label='spike thld')
+    xlabel('Time (ms)')
+    ylabel('potential (V)')
+    legend(loc='upper right')
+
+    subplot(1, 2, 2)
+    plot(state_mon_cs.t / ms, state_mon_cs.g_es[0], label='g_es')
+    plot(state_mon_cs.t / ms, state_mon_cs.g_is[0], label='g_is')
+    plot(state_mon_cs.t / ms, state_mon_cs.g_ed[0], label='g_ed')
+    plot(state_mon_cs.t / ms, state_mon_cs.g_id[0], label='g_id')
+
+    xlabel('Time (ms)')
+    ylabel('Conductance (S)')
+    legend(loc='best')
+
+    print("Spike times CS: %s" % spike_mon_cs.t[:])
+
+    # CC Neurons plot
+
+    figure(figsize=(18, 4))
+    subplot(1, 2, 1)
+    plot(state_mon_cc.t / ms, state_mon_cc.v_s[0], label='v_s')
+    plot(state_mon_cc.t / ms, state_mon_cc.v_d[0], label='v_d')
+    for (t, i) in zip(spike_mon_cc.t, spike_mon_cc.i):
+        if i == 0:
+            axvline(t / ms, ls='--', c='C1', lw=1)
+    axhline(V_t / mV / 1000, ls=':', c='C2', lw=3, label='spike thld')
+    xlabel('Time (ms)')
+    ylabel('membrane potential (V)')
+    legend(loc='upper right')
+
+    subplot(1, 2, 2)
+    plot(state_mon_cc.t / ms, state_mon_cc.g_es[0], label='g_es')
+    plot(state_mon_cc.t / ms, state_mon_cc.g_is[0], label='g_is')
+    plot(state_mon_cc.t / ms, state_mon_cc.g_ed[0], label='g_ed')
+    plot(state_mon_cc.t / ms, state_mon_cc.g_id[0], label='g_id')
+
+    xlabel('Time (ms)')
+    ylabel('Conductance (S)')
+    legend(loc='best')
+
+    print("Spike times CC: %s" % spike_mon_cc.t[:])
+
+    # SST Neurons plot
+
+    figure(figsize=(18, 4))
+    subplot(1, 2, 1)
+    plot(state_mon_sst.t / ms, state_mon_sst.v[0], label='v')
+    for (t, i) in zip(spike_mon_sst.t, spike_mon_sst.i):
+        if i == 0:
+            axvline(t / ms, ls='--', c='C1', lw=1)
+    axhline(V_t / mV / 1000, ls=':', c='C2', lw=3, label='spike thld')
+    xlabel('Time (ms)')
+    ylabel('membrane potential (V)')
+    legend(loc='upper right')
+
+    subplot(1, 2, 2)
+    plot(state_mon_sst.t / ms, state_mon_sst.g_e[0], label='g_e')
+    plot(state_mon_sst.t / ms, state_mon_sst.g_i[0], label='g_i')
+
+    xlabel('Time (ms)')
+    ylabel('Conductance (S)')
+    legend(loc='best')
+
+    print("Spike times SST: %s" % spike_mon_sst.t[:])
+
+    # PV Neurons plot
+
+    figure(figsize=(18, 4))
+    subplot(1, 2, 1)
+    plot(state_mon_pv.t / ms, state_mon_pv.v[0], label='v')
+    for (t, i) in zip(spike_mon_pv.t, spike_mon_pv.i):
+        if i == 0:
+            axvline(t / ms, ls='--', c='C1', lw=1)
+    axhline(V_t / mV / 1000, ls=':', c='C2', lw=3)
+    xlabel('Time (ms)')
+    ylabel('membrane potential (V)')
+
+    subplot(1, 2, 2)
+    plot(state_mon_pv.t / ms, state_mon_pv.g_e[0], label='g_e')
+    plot(state_mon_pv.t / ms, state_mon_pv.g_i[0], label='g_i')
+
+    xlabel('Time (ms)')
+    ylabel('Conductance (S)')
+    legend(loc='best')
+
+    print("Spike times PV: %s" % spike_mon_pv.t[:])
 
 
 run_simulation()
