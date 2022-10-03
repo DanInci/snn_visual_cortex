@@ -25,10 +25,10 @@ def run_simulation(params=None):
     duration = 0.3 * second  # Total simulation time
     sim_dt = 0.1 * ms  # Integrator/sampling step
 
-    N_sst = 10  # Number of SST neurons (inhibitory)
-    N_pv = 10  # Number of PV neurons (inhibitory)
-    N_cc = 10  # Number of CC neurons (excitatory)
-    N_cs = 10  # Number of CS neurons (excitatory)
+    N_sst = 4  # Number of SST neurons (inhibitory)
+    N_pv = 4  # Number of PV neurons (inhibitory)
+    N_cc = 4  # Number of CC neurons (excitatory)
+    N_cs = 4  # Number of CS neurons (excitatory)
 
     ### Neuron parameters
     tau_S = 16 * ms  #
@@ -264,10 +264,10 @@ def run_simulation(params=None):
 
     # Raster plot
 
-    plot(spike_mon_cs.t / ms, spike_mon_cs.i, '.b', label='CS')
-    plot(spike_mon_cc.t / ms, spike_mon_cc.i, '.r', label='CC')
-    plot(spike_mon_sst.t / ms, spike_mon_sst.i, '.g', label='SST')
-    plot(spike_mon_pv.t / ms, spike_mon_pv.i, '.y', label='PV')
+    plot(spike_mon_cs.t / ms, 0 + spike_mon_cs.i, '.b', label='CS')
+    plot(spike_mon_cc.t / ms, N_cs + spike_mon_cc.i, '.r', label='CC')
+    plot(spike_mon_sst.t / ms, (N_cs + N_cc) + spike_mon_sst.i, '.g', label='SST')
+    plot(spike_mon_pv.t / ms, (N_cs + N_cc + N_sst) + spike_mon_pv.i, '.y', label='PV')
     xlabel('Time (ms)')
     ylabel('Neuron index');
     legend(loc='best')
