@@ -60,8 +60,8 @@ default = {
     "pPV_SST":   0.14,
 
     ### External Input
-    "I_ext_sst":  270*pA,
-    "I_ext_pv":   270*pA,
+    "I_ext_sst":    0*pA,
+    "I_ext_pv":     0*pA,
     "I_ext_cc":     0*pA,
     "I_ext_cs":     0*pA
 }

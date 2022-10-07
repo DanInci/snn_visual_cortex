@@ -97,7 +97,6 @@ def run_simulation(params=None, seed_val=12345):
     cs_neurons.v_d = -70 * mV
     cs_neurons.g_es = cs_neurons.g_ed = 'rand()*w_e'
     cs_neurons.g_is = cs_neurons.g_id = 'rand()*w_i'
-    cs_neurons.K = 1  # TODO How to initialise this?
 
     # CC Neurons
     cc_neurons = NeuronGroup(N_cc, model=eqs_exc, threshold='v_s > V_t',
@@ -107,7 +106,6 @@ def run_simulation(params=None, seed_val=12345):
     cc_neurons.v_d = -70 * mV
     cc_neurons.g_es = cc_neurons.g_ed = 'rand()*w_e'
     cc_neurons.g_is = cc_neurons.g_id = 'rand()*w_i'
-    cc_neurons.K = 1  # TODO How to initialise this?
 
     # ##############################################################################
     # # Synapses & Connections
