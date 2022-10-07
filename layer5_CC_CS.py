@@ -222,4 +222,6 @@ def run_simulation(params=None, seed_val=12345):
     plot_states(state_mon_pv, spike_mon_pv, spike_thld=V_t, output_folder='output', file_name='state_plot_PV')
 
 
-run_simulation(default_params, seed_val=12345)
+params = default_params
+params['N_pv'] = params['N_sst'] = params['N_cc'] = params['N_cs'] = 10
+run_simulation(params, seed_val=12345)

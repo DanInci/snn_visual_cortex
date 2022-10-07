@@ -8,4 +8,4 @@ def sigmoid(x):
     E_d = -38 * mV  # position control of threshold
     D_d = 6 * mV  # sharpness control of threshold
 
-    return 1/(1+np.exp(-(-x-E_d)/D_d))
+    return 1/(1+exp(-(-x-E_d)/D_d))
