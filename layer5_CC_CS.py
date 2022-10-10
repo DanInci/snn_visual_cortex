@@ -9,7 +9,7 @@ class Struct:
         self.__dict__.update(entries)
 
 
-def run_simulation(params=None, seed_val=12345):
+def run_simulation(params=None, seed_val=12345, sst_target_soma=True):
     p = Struct(**params)
 
     start_scope()
@@ -136,21 +136,21 @@ def run_simulation(params=None, seed_val=12345):
     ## target CS soma
     conn_SST_CSsoma = Synapses(sst_neurons, cs_neurons, on_pre='g_is+=w_i',
                                name='SST_CSsoma')  # inhibitory (optional connection)
-    conn_SST_CSsoma.connect(p=p.pSST_CS)
+    conn_SST_CSsoma.connect(p=p.pSST_CS if sst_target_soma else 0) # inhibitory (optional connection)
     conn_CSsoma_SST = Synapses(cs_neurons, sst_neurons, on_pre='g_e+=w_e', name='CSsoma_SST')  # excitatory
     conn_CSsoma_SST.connect(p=p.pCS_SST)
 
     ## taget CC soma
     conn_SST_CCsoma = Synapses(sst_neurons, cc_neurons, on_pre='g_is+=w_i',
                                name='SST_CCsoma')  # inhibitory (optional connection)
-    conn_SST_CCsoma.connect(p=p.pSST_CC)
+    conn_SST_CCsoma.connect(p=p.pSST_CC if sst_target_soma else 0)  # inhibitory (optional connection)
     conn_CCsoma_SST = Synapses(cc_neurons, sst_neurons, on_pre='g_e+=w_e', name='CCsoma_SST')  # excitatory
     conn_CCsoma_SST.connect(p=p.pCC_SST)
 
     # CC => CS
     ## target CS soma
-    conn_SST_CCdendrite = Synapses(cc_neurons, cs_neurons, on_pre='g_es+=w_e', name='CC_CSsoma')  # excitatory
-    conn_SST_CCdendrite.connect(p=p.pCC_CS)
+    conn_CC_CS = Synapses(cc_neurons, cs_neurons, on_pre='g_es+=w_e', name='CC_CSsoma')  # excitatory
+    conn_CC_CS.connect(p=p.pCC_CS)
 
     # self connections
     conn_CSsoma_CSsoma = Synapses(cs_neurons, cs_neurons, on_pre='g_es+=w_e', name='CSsoma_CSsoma')  # excitatory
@@ -222,4 +222,6 @@ def run_simulation(params=None, seed_val=12345):
 
 params = default_params
 params['N_pv'] = params['N_sst'] = params['N_cc'] = params['N_cs'] = 10
+params['I_ext_cc'] = params['I_ext_cs'] = 800*pA
+params['I_ext_pv'] = params['I_ext_sst'] = 0*pA
 run_simulation(params, seed_val=12345)
