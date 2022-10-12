@@ -7,6 +7,14 @@ matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 
 
+index_to_ntype_dict = {
+    0: 'CS',
+    1: 'CC',
+    2: 'SST',
+    3: 'PV'
+}
+
+
 def plot_raster(spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv, output_folder=None,
                 file_name='spike_raster_plot'):
     """ Plots the spikes """
@@ -66,3 +74,29 @@ def plot_states(state_mon, spike_mon, spike_thld, output_folder=None, file_name=
             os.makedirs(output_folder)
 
         plt.savefig('%s/%s.pdf' % (output_folder, file_name), bbox_inches='tight')
+
+
+def plot_isi_histograms(isi_cs, isi_cc, isi_sst, isi_pv, output_folder=None, file_name='isi_histograms'):
+    interspike_intervals = [isi_cs, isi_cc, isi_sst, isi_pv]
+
+    columns = 2
+    rows = int(len(interspike_intervals) / columns)
+
+    fig, axs = plt.subplots(rows, columns, figsize=(12, 9))
+
+    for (ntype_index, interspike_intervals_i) in enumerate(interspike_intervals):
+        row_idx = int(ntype_index / columns)
+        col_idx = ntype_index % columns
+
+        axs[row_idx][col_idx].hist(interspike_intervals_i)
+        axs[row_idx][col_idx].axis(ymin=0)
+        axs[row_idx][col_idx].set_title(f'Neuron group {index_to_ntype_dict[ntype_index]}', fontsize=10)
+        axs[row_idx][col_idx].set_ylabel("Frequency", fontsize=10)
+        axs[row_idx][col_idx].set_xlabel("ISI", fontsize=10)
+        axs[row_idx][col_idx].tick_params(axis='both', which='major', labelsize=10)
+
+    if output_folder is not None:
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+
+        fig.savefig('%s/%s.pdf' % (output_folder, file_name), bbox_inches='tight')

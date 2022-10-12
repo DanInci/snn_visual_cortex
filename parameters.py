@@ -2,7 +2,7 @@ from brian2 import *
 
 default = {
     ### General parameters
-    "duration": 0.1 * second,  # Total simulation time
+    "duration": 0.5 * second,  # Total simulation time
     "sim_dt":   0.1 * ms,  # Integrator/sampling step
 
     "N_sst": 2,  # Number of SST neurons (inhibitory)
@@ -43,25 +43,25 @@ default = {
     "w_i":  1.0 * nS,  # Inhibitory synaptic conductance
 
     ### Connection probabilities
-    "pCS_CS":    0.16,
-    "pCS_SST":   0.23,
-    "pCS_PV":    0.18,
-    "pSST_CS":   0.52,
-    "pPV_CS":    0.43,
-    "pCC_CC":    0.06,
-    "pCC_SST":   0.26,
-    "pCC_PV":    0.22,
-    "pSST_CC":   0.13,
-    "pPV_CC":    0.38,
-    "pCC_CS":    0.09,
-    "pSST_PV":   0.29,
-    "pSST_SST":  0.1,
-    "pPV_PV":    0.5,
-    "pPV_SST":   0.14,
+    "pCS_CS":    1,  #0.16,
+    "pCS_SST":   1,  #0.23,
+    "pCS_PV":    1,  #0.18,
+    "pSST_CS":   1,  #0.52,
+    "pPV_CS":    1,  #0.43,
+    "pCC_CC":    1,  #0.06,
+    "pCC_SST":   1,  #0.26,
+    "pCC_PV":    1,  #0.22,
+    "pSST_CC":   1,  #0.13,
+    "pPV_CC":    1,  #0.38,
+    "pCC_CS":    1,  #0.09,
+    "pSST_PV":   1,  #0.29,
+    "pSST_SST":  1,  #0.1,
+    "pPV_PV":    1,  #0.5,
+    "pPV_SST":   1,  #0.14,
 
     ### External Input
-    "I_ext_sst":    0*pA,
-    "I_ext_pv":     0*pA,
-    "I_ext_cc":     0*pA,
-    "I_ext_cs":     0*pA
+    "I_ext_sst":    [0*pA, 0*pA],
+    "I_ext_pv":     [0*pA, 0*pA],
+    "I_ext_cc":     [500*pA, 500*pA * 1.05],
+    "I_ext_cs":     [500*pA, 500*pA * 1.05]
 }

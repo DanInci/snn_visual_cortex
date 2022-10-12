@@ -3,13 +3,15 @@ from plotting import *
 from equations import *
 from parameters import default as default_params
 
+import helpers as hlp
+
 
 class Struct:
     def __init__(self, **entries):
         self.__dict__.update(entries)
 
 
-def run_simulation(params=None, seed_val=12345):
+def run_simulation(params=None, seed_val=12345, sst_target_soma=True):
     p = Struct(**params)
 
     start_scope()
@@ -60,10 +62,10 @@ def run_simulation(params=None, seed_val=12345):
     w_i = p.w_i  # Inhibitory synaptic conductance
 
     ### External Input
-    I_ext_sst = [p.I_ext_sst for i in range(N_sst)]
-    I_ext_pv = [p.I_ext_pv for i in range(N_sst)]
-    I_ext_cs = [p.I_ext_cs for i in range(N_sst)]
-    I_ext_cc = [p.I_ext_cc for i in range(N_sst)]
+    I_ext_sst = p.I_ext_sst
+    I_ext_pv = p.I_ext_pv
+    I_ext_cs = p.I_ext_cs
+    I_ext_cc = p.I_ext_cc
 
     ################################################################################
 
@@ -136,21 +138,21 @@ def run_simulation(params=None, seed_val=12345):
     ## target CS soma
     conn_SST_CSsoma = Synapses(sst_neurons, cs_neurons, on_pre='g_is+=w_i',
                                name='SST_CSsoma')  # inhibitory (optional connection)
-    conn_SST_CSsoma.connect(p=p.pSST_CS)
+    conn_SST_CSsoma.connect(p=p.pSST_CS if sst_target_soma else 0) # inhibitory (optional connection)
     conn_CSsoma_SST = Synapses(cs_neurons, sst_neurons, on_pre='g_e+=w_e', name='CSsoma_SST')  # excitatory
     conn_CSsoma_SST.connect(p=p.pCS_SST)
 
     ## taget CC soma
     conn_SST_CCsoma = Synapses(sst_neurons, cc_neurons, on_pre='g_is+=w_i',
                                name='SST_CCsoma')  # inhibitory (optional connection)
-    conn_SST_CCsoma.connect(p=p.pSST_CC)
+    conn_SST_CCsoma.connect(p=p.pSST_CC if sst_target_soma else 0)  # inhibitory (optional connection)
     conn_CCsoma_SST = Synapses(cc_neurons, sst_neurons, on_pre='g_e+=w_e', name='CCsoma_SST')  # excitatory
     conn_CCsoma_SST.connect(p=p.pCC_SST)
 
     # CC => CS
     ## target CS soma
-    conn_SST_CCdendrite = Synapses(cc_neurons, cs_neurons, on_pre='g_es+=w_e', name='CC_CSsoma')  # excitatory
-    conn_SST_CCdendrite.connect(p=p.pCC_CS)
+    conn_CC_CS = Synapses(cc_neurons, cs_neurons, on_pre='g_es+=w_e', name='CC_CSsoma')  # excitatory
+    conn_CC_CS.connect(p=p.pCC_CS)
 
     # self connections
     conn_CSsoma_CSsoma = Synapses(cs_neurons, cs_neurons, on_pre='g_es+=w_e', name='CSsoma_CSsoma')  # excitatory
@@ -219,7 +221,41 @@ def run_simulation(params=None, seed_val=12345):
     plot_states(state_mon_sst, spike_mon_sst, spike_thld=V_t, output_folder='output', file_name='state_plot_SST')
     plot_states(state_mon_pv, spike_mon_pv, spike_thld=V_t, output_folder='output', file_name='state_plot_PV')
 
+    results = {}
+
+    # Compute firing rate for each neuron group
+
+    results["firing_rates_cs"] = hlp.compute_firing_rate_for_neuron_type(spike_mon_cs, duration)
+    results["firing_rates_cc"] = hlp.compute_firing_rate_for_neuron_type(spike_mon_cc, duration)
+    results["firing_rates_sst"] = hlp.compute_firing_rate_for_neuron_type(spike_mon_sst, duration)
+    results["firing_rates_pv"] = hlp.compute_firing_rate_for_neuron_type(spike_mon_pv, duration)
+
+    # Compute input & output selectivity for CC & CS neuron groups
+
+    results["input_selectivity"] = hlp.compute_input_selectivity(I_ext_cs)
+    results["output_selectivity_cs"] = hlp.compute_output_selectivity_for_neuron_type(spike_mon_cs, duration)
+    results["output_selectivity_cc"] = hlp.compute_output_selectivity_for_neuron_type(spike_mon_cc, duration)
+
+    # Compute inter-spike intervals for each neuron group
+
+    results["interspike_intervals_cs"] = np.concatenate(hlp.compute_interspike_intervals(spike_mon_cs), axis=0)
+    results["interspike_intervals_cc"] = np.concatenate(hlp.compute_interspike_intervals(spike_mon_cc), axis=0)
+    results["interspike_intervals_sst"] = np.concatenate(hlp.compute_interspike_intervals(spike_mon_sst), axis=0)
+    results["interspike_intervals_pv"] = np.concatenate(hlp.compute_interspike_intervals(spike_mon_pv), axis=0)
+
+    plot_isi_histograms(results["interspike_intervals_cs"], results["interspike_intervals_cc"], results["interspike_intervals_sst"], results["interspike_intervals_pv"], output_folder='output', file_name='isi_histograms')
+
+    return results
+
 
 params = default_params
-params['N_pv'] = params['N_sst'] = params['N_cc'] = params['N_cs'] = 10
-run_simulation(params, seed_val=12345)
+results = run_simulation(params, seed_val=12345)
+
+print(f'Avg firing rate for CS neurons: {np.mean(results["firing_rates_cs"]) * Hz}')
+print(f'Avg firing rate for CC neurons: {np.mean(results["firing_rates_cc"]) * Hz}')
+print(f'Avg firing rate for SST neurons: {np.mean(results["firing_rates_sst"]) * Hz}')
+print(f'Avg firing rate for PV neurons: {np.mean(results["firing_rates_pv"]) * Hz}')
+
+print(f'Input selectivity: {results["input_selectivity"]}')
+print(f'Output selectivity CS: {results["output_selectivity_cs"]}')
+print(f'Output selectivity CC: {results["output_selectivity_cc"]}')
