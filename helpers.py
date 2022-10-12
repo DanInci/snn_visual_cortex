@@ -24,12 +24,16 @@ def compute_firing_rate_for_neuron_type(spike_mon, sim_duration):
 
 
 def compute_input_selectivity(inputs):
+    assert len(inputs) >= 2
+
     return np.abs(inputs[0] - inputs[1]) / (inputs[0] + inputs[1])
 
 
 @check_units(sim_duration=ms, result=1)
 def compute_output_selectivity_for_neuron_type(spike_mon, sim_duration):
     rates_for_i = compute_firing_rate_for_neuron_type(spike_mon, sim_duration)
+    assert len(rates_for_i) >= 2
+
     return np.abs(rates_for_i[0] - rates_for_i[1]) / (rates_for_i[0] + rates_for_i[1])
 
 

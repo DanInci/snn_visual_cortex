@@ -67,6 +67,9 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True):
     I_ext_cs = p.I_ext_cs
     I_ext_cc = p.I_ext_cc
 
+    lambda_cc = p.lambda_cc
+    lambda_cs = p.lambda_cs
+
     ################################################################################
 
     ################################################################################
@@ -94,20 +97,26 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True):
     # CS Neurons
     cs_neurons = NeuronGroup(N_cs, model=eqs_exc, threshold='v_s > V_t',
                              reset='v_s = E_l', refractory=8.3 * ms, method='euler')
-    cs_neurons.set_states({'I_external': I_ext_cs})
     cs_neurons.v_s = 'E_l + rand()*(V_t-E_l)'
     cs_neurons.v_d = -70 * mV
     cs_neurons.g_es = cs_neurons.g_ed = 'rand()*w_e'
     cs_neurons.g_is = cs_neurons.g_id = 'rand()*w_i'
 
+    # Poisson input to CS neurons
+    cs_neurons_p1 = PoissonInput(cs_neurons[0], 'I_external', N=1, rate=lambda_cs, weight=I_ext_cs[0])
+    cs_neurons_p2 = PoissonInput(cs_neurons[1], 'I_external', N=1, rate=lambda_cs, weight=I_ext_cs[1])
+
     # CC Neurons
     cc_neurons = NeuronGroup(N_cc, model=eqs_exc, threshold='v_s > V_t',
                              reset='v_s = E_l', refractory=8.3 * ms, method='euler')
-    cc_neurons.set_states({'I_external': I_ext_cc})
     cc_neurons.v_s = 'E_l + rand()*(V_t-E_l)'
     cc_neurons.v_d = -70 * mV
     cc_neurons.g_es = cc_neurons.g_ed = 'rand()*w_e'
     cc_neurons.g_is = cc_neurons.g_id = 'rand()*w_i'
+
+    # Poisson input to CC neurons
+    cc_neurons_p1 = PoissonInput(cc_neurons[0], 'I_external', N=1, rate=lambda_cc, weight=I_ext_cc[0])
+    cc_neurons_p2 = PoissonInput(cc_neurons[1], 'I_external', N=1, rate=lambda_cc, weight=I_ext_cc[1])
 
     # ##############################################################################
     # # Synapses & Connections
