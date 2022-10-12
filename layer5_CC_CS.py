@@ -3,6 +3,8 @@ from plotting import *
 from equations import *
 from parameters import default as default_params
 
+import helpers as hlp
+
 
 class Struct:
     def __init__(self, **entries):
@@ -60,10 +62,10 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True):
     w_i = p.w_i  # Inhibitory synaptic conductance
 
     ### External Input
-    I_ext_sst = [p.I_ext_sst for i in range(N_sst)]
-    I_ext_pv = [p.I_ext_pv for i in range(N_sst)]
-    I_ext_cs = [p.I_ext_cs for i in range(N_sst)]
-    I_ext_cc = [p.I_ext_cc for i in range(N_sst)]
+    I_ext_sst = p.I_ext_sst
+    I_ext_pv = p.I_ext_pv
+    I_ext_cs = p.I_ext_cs
+    I_ext_cc = p.I_ext_cc
 
     ################################################################################
 
@@ -219,9 +221,41 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True):
     plot_states(state_mon_sst, spike_mon_sst, spike_thld=V_t, output_folder='output', file_name='state_plot_SST')
     plot_states(state_mon_pv, spike_mon_pv, spike_thld=V_t, output_folder='output', file_name='state_plot_PV')
 
+    results = {}
+
+    # Compute firing rate for each neuron group
+
+    results["firing_rates_cs"] = hlp.compute_firing_rate_for_neuron_type(spike_mon_cs, duration)
+    results["firing_rates_cc"] = hlp.compute_firing_rate_for_neuron_type(spike_mon_cc, duration)
+    results["firing_rates_sst"] = hlp.compute_firing_rate_for_neuron_type(spike_mon_sst, duration)
+    results["firing_rates_pv"] = hlp.compute_firing_rate_for_neuron_type(spike_mon_pv, duration)
+
+    # Compute input & output selectivity for CC & CS neuron groups
+
+    results["input_selectivity"] = hlp.compute_input_selectivity(I_ext_cs)
+    results["output_selectivity_cs"] = hlp.compute_output_selectivity_for_neuron_type(spike_mon_cs, duration)
+    results["output_selectivity_cc"] = hlp.compute_output_selectivity_for_neuron_type(spike_mon_cc, duration)
+
+    # Compute inter-spike intervals for each neuron group
+
+    results["interspike_intervals_cs"] = np.concatenate(hlp.compute_interspike_intervals(spike_mon_cs), axis=0)
+    results["interspike_intervals_cc"] = np.concatenate(hlp.compute_interspike_intervals(spike_mon_cc), axis=0)
+    results["interspike_intervals_sst"] = np.concatenate(hlp.compute_interspike_intervals(spike_mon_sst), axis=0)
+    results["interspike_intervals_pv"] = np.concatenate(hlp.compute_interspike_intervals(spike_mon_pv), axis=0)
+
+    plot_isi_histograms(results["interspike_intervals_cs"], results["interspike_intervals_cc"], results["interspike_intervals_sst"], results["interspike_intervals_pv"], output_folder='output', file_name='isi_histograms')
+
+    return results
+
 
 params = default_params
-params['N_pv'] = params['N_sst'] = params['N_cc'] = params['N_cs'] = 10
-params['I_ext_cc'] = params['I_ext_cs'] = 800*pA
-params['I_ext_pv'] = params['I_ext_sst'] = 0*pA
-run_simulation(params, seed_val=12345)
+results = run_simulation(params, seed_val=12345)
+
+print(f'Avg firing rate for CS neurons: {np.mean(results["firing_rates_cs"]) * Hz}')
+print(f'Avg firing rate for CC neurons: {np.mean(results["firing_rates_cc"]) * Hz}')
+print(f'Avg firing rate for SST neurons: {np.mean(results["firing_rates_sst"]) * Hz}')
+print(f'Avg firing rate for PV neurons: {np.mean(results["firing_rates_pv"]) * Hz}')
+
+print(f'Input selectivity: {results["input_selectivity"]}')
+print(f'Output selectivity CS: {results["output_selectivity_cs"]}')
+print(f'Output selectivity CC: {results["output_selectivity_cc"]}')
