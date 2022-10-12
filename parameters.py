@@ -63,5 +63,8 @@ default = {
     "I_ext_sst":    [0*pA, 0*pA],
     "I_ext_pv":     [0*pA, 0*pA],
     "I_ext_cc":     [500*pA, 500*pA * 1.05],
-    "I_ext_cs":     [500*pA, 500*pA * 1.05]
+    "I_ext_cs":     [500*pA, 500*pA * 1.05],
+
+    "lambda_cc":  10*Hz,
+    "lambda_cs":  10*Hz
 }
