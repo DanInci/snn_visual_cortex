@@ -1,4 +1,5 @@
 from brian2 import ms, mV
+import numpy as np
 import matplotlib
 import os
 
@@ -76,24 +77,44 @@ def plot_states(state_mon, spike_mon, spike_thld, output_folder=None, file_name=
         plt.savefig('%s/%s.pdf' % (output_folder, file_name), bbox_inches='tight')
 
 
-def plot_isi_histograms(isi_cs, isi_cc, isi_sst, isi_pv, output_folder=None, file_name='isi_histograms'):
-    interspike_intervals = [isi_cs, isi_cc, isi_sst, isi_pv]
-
+def plot_isi_histograms(interspike_intervals, autocorr=None, output_folder=None, file_name='isi_histograms'):
     columns = 2
-    rows = int(len(interspike_intervals) / columns)
+    rows = len(interspike_intervals)
 
-    fig, axs = plt.subplots(rows, columns, figsize=(12, 9))
+    fig, axs = plt.subplots(rows, columns, figsize=(4*columns, 6*rows))
 
     for (ntype_index, interspike_intervals_i) in enumerate(interspike_intervals):
-        row_idx = int(ntype_index / columns)
-        col_idx = ntype_index % columns
+        row_idx = ntype_index
 
-        axs[row_idx][col_idx].hist(interspike_intervals_i)
-        axs[row_idx][col_idx].axis(ymin=0)
-        axs[row_idx][col_idx].set_title(f'Neuron group {index_to_ntype_dict[ntype_index]}', fontsize=10)
-        axs[row_idx][col_idx].set_ylabel("Frequency", fontsize=10)
-        axs[row_idx][col_idx].set_xlabel("ISI", fontsize=10)
-        axs[row_idx][col_idx].tick_params(axis='both', which='major', labelsize=10)
+        if autocorr:
+            acorr_struct = autocorr[ntype_index]
+
+        if acorr_struct:
+            xaxis = acorr_struct["xaxis"]
+            acorr = acorr_struct["acorr"]
+            minimum = acorr_struct["minimum"]
+            label_minimum = "maxISI " + str(np.round(xaxis[minimum] * ms, 4))
+
+        # plot histogram of neuron group
+        n, bins, patches = axs[row_idx][0].hist(interspike_intervals_i * 1000, bins=10)
+        axs[row_idx][0].axis(ymin=0)
+        axs[row_idx][0].set_title(f'Neuron group {index_to_ntype_dict[ntype_index]}', fontsize=10)
+        axs[row_idx][0].set_xlabel("ISI [ms]", fontsize=10)
+        axs[row_idx][0].set_ylabel("Frequency", fontsize=10)
+        axs[row_idx][0].tick_params(axis='both', which='major', labelsize=10)
+        if acorr_struct and minimum:
+            axs[row_idx][0].vlines(xaxis[minimum], 0, np.max(n), label=label_minimum, color='red')
+            axs[row_idx][0].legend()
+
+        # plot auto-correlation function of isi for neuron group
+        if acorr_struct:
+            axs[row_idx][1].plot(xaxis, acorr, c='k')
+            axs[row_idx][1].set_title(f'Neuron group {index_to_ntype_dict[ntype_index]}', fontsize=10)
+            axs[row_idx][1].set_xlabel("time lag [ms]")
+            axs[row_idx][1].set_ylabel("norm. autocorr.")
+            if minimum:
+                axs[row_idx][1].vlines(xaxis[minimum], 0, 1, label=label_minimum, color='red')
+                axs[row_idx][1].legend()
 
     if output_folder is not None:
         if not os.path.exists(output_folder):

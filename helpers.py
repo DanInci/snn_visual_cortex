@@ -1,6 +1,8 @@
 from brian2 import *
 import pandas as pd
 
+from scipy.signal import argrelextrema
+
 
 # TODO see how to reference this from equations
 @check_units(x=volt, result=1)
@@ -45,3 +47,45 @@ def compute_interspike_intervals(spike_mon):
         by_neuron.append(interspike_intervals)
 
     return by_neuron
+
+
+def compute_autocorr(spike_intervals):
+    if len(spike_intervals) == 0:
+        return None, None
+
+    autocorr = plt.acorr(spike_intervals, normed=True, maxlags=None)
+    right_xaxis = autocorr[0][int(len(autocorr[1]) / 2):]
+    right_acorr = autocorr[1][int(len(autocorr[1]) / 2):]
+    return right_xaxis, right_acorr
+
+
+def find_minimum_autocorr(acorr):
+    if acorr is None:
+        return None
+
+    minimum = None
+    found_minimum = argrelextrema(acorr, np.less)[0]
+    if len(found_minimum) == 1:
+        if found_minimum[0] != 1:
+            minimum = found_minimum[0]
+    elif len(found_minimum) > 1:
+        if argrelextrema(acorr, np.less)[0][0] != 1:
+            minimum = argrelextrema(acorr, np.less)[0][0]
+        else:
+            minimum = argrelextrema(acorr, np.less)[0][1]
+
+    return minimum
+
+
+def compute_autocorr_struct(interspike_intervals):
+    autocorr_sst = None
+
+    xaxis_sst, acorr_sst = compute_autocorr(interspike_intervals)
+    if xaxis_sst is not None and acorr_sst is not None:
+        autocorr_sst = {}
+        minimum_sst = find_minimum_autocorr(acorr_sst)
+        autocorr_sst["xaxis"] = xaxis_sst
+        autocorr_sst["acorr"] = acorr_sst
+        autocorr_sst["minimum"] = minimum_sst
+
+    return autocorr_sst

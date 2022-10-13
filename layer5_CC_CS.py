@@ -252,7 +252,31 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True):
     results["interspike_intervals_sst"] = np.concatenate(hlp.compute_interspike_intervals(spike_mon_sst), axis=0)
     results["interspike_intervals_pv"] = np.concatenate(hlp.compute_interspike_intervals(spike_mon_pv), axis=0)
 
-    plot_isi_histograms(results["interspike_intervals_cs"], results["interspike_intervals_cc"], results["interspike_intervals_sst"], results["interspike_intervals_pv"], output_folder='output', file_name='isi_histograms')
+    # Compute auto-correlation for isi for each neuron group
+    # for CS
+    autocorr_cs = hlp.compute_autocorr_struct(results["interspike_intervals_cs"])
+    if autocorr_cs:
+        results["acorr_min_cs"] = autocorr_cs["minimum"]
+
+    # for CC
+    autocorr_cc = hlp.compute_autocorr_struct(results["interspike_intervals_cc"])
+    if autocorr_cc:
+        results["acorr_min_cc"] = autocorr_cc["minimum"]
+
+
+    # for SST
+    autocorr_sst = hlp.compute_autocorr_struct(results["interspike_intervals_sst"])
+    if autocorr_sst:
+        results["acorr_min_sst"] = autocorr_sst["minimum"]
+
+    # for PV
+    autocorr_pv = hlp.compute_autocorr_struct(results["interspike_intervals_pv"])
+    if autocorr_pv:
+        results["acorr_min_sst"] = autocorr_pv["minimum"]
+
+    interspike_intervals = [results["interspike_intervals_cs"], results["interspike_intervals_cc"], results["interspike_intervals_sst"], results["interspike_intervals_pv"]]
+    autocorr = [autocorr_cs, autocorr_cc, autocorr_sst, autocorr_pv]
+    plot_isi_histograms(interspike_intervals, autocorr=autocorr, output_folder='output', file_name='isi_histograms')
 
     return results
 
