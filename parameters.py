@@ -2,7 +2,7 @@ from brian2 import *
 
 default = {
     ### General parameters
-    "duration": 0.5 * second,  # Total simulation time
+    "duration": 1 * second,  # Total simulation time
     "sim_dt":   0.1 * ms,  # Integrator/sampling step
 
     "N_sst": 2,  # Number of SST neurons (inhibitory)

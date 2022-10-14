@@ -14,6 +14,19 @@ def sigmoid(x):
     return 1/(1+exp(-(-x-E_d)/D_d))
 
 
+def bin(spiketime, dt):
+    if len(spiketime) == 0:
+        return []
+
+    spiketime = np.array(spiketime)-spiketime[0]
+    indexes = np.round(spiketime/dt).astype(int)
+    A_t = np.zeros(indexes[-1]+1)
+    for i in indexes:
+        A_t[i] += 1
+
+    return A_t
+
+
 def count_spikes_for_neuron_type(spike_mon):
     a = pd.Series([i for i in spike_mon.i], dtype=int)
     return a.value_counts()
@@ -77,15 +90,16 @@ def find_minimum_autocorr(acorr):
     return minimum
 
 
-def compute_autocorr_struct(interspike_intervals):
+def compute_autocorr_struct(interspike_intervals, bin_size=0.005):
     autocorr_sst = None
 
-    xaxis_sst, acorr_sst = compute_autocorr(interspike_intervals)
-    if xaxis_sst is not None and acorr_sst is not None:
+    binned_isi = bin(np.sort(interspike_intervals), bin_size)
+    xaxis, acorr = compute_autocorr(binned_isi)
+    if xaxis is not None and acorr is not None:
         autocorr_sst = {}
-        minimum_sst = find_minimum_autocorr(acorr_sst)
-        autocorr_sst["xaxis"] = xaxis_sst
-        autocorr_sst["acorr"] = acorr_sst
+        minimum_sst = find_minimum_autocorr(acorr)
+        autocorr_sst["xaxis"] = xaxis * bin_size
+        autocorr_sst["acorr"] = acorr
         autocorr_sst["minimum"] = minimum_sst
 
     return autocorr_sst
