@@ -81,7 +81,7 @@ def plot_isi_histograms(interspike_intervals, autocorr=None, output_folder=None,
     columns = 2
     rows = len(interspike_intervals)
 
-    fig, axs = plt.subplots(rows, columns, figsize=(4*columns, 6*rows))
+    fig, axs = plt.subplots(rows, columns, figsize=(6*columns, 6*rows))
 
     for (ntype_index, interspike_intervals_i) in enumerate(interspike_intervals):
         row_idx = ntype_index
@@ -93,13 +93,13 @@ def plot_isi_histograms(interspike_intervals, autocorr=None, output_folder=None,
             xaxis = acorr_struct["xaxis"]
             acorr = acorr_struct["acorr"]
             minimum = acorr_struct["minimum"]
-            label_minimum = "maxISI " + str(np.round(xaxis[minimum] * ms, 4))
+            label_minimum = f"maxISI {str(np.round(xaxis[minimum], 4))} s"
 
         # plot histogram of neuron group
-        n, bins, patches = axs[row_idx][0].hist(interspike_intervals_i * 1000, bins=10)
+        n, bins, patches = axs[row_idx][0].hist(interspike_intervals_i, bins=50)
         axs[row_idx][0].axis(ymin=0)
         axs[row_idx][0].set_title(f'Neuron group {index_to_ntype_dict[ntype_index]}', fontsize=10)
-        axs[row_idx][0].set_xlabel("ISI [ms]", fontsize=10)
+        axs[row_idx][0].set_xlabel("ISI [s]", fontsize=10)
         axs[row_idx][0].set_ylabel("Frequency", fontsize=10)
         axs[row_idx][0].tick_params(axis='both', which='major', labelsize=10)
         if acorr_struct and minimum:
@@ -110,7 +110,7 @@ def plot_isi_histograms(interspike_intervals, autocorr=None, output_folder=None,
         if acorr_struct:
             axs[row_idx][1].plot(xaxis, acorr, c='k')
             axs[row_idx][1].set_title(f'Neuron group {index_to_ntype_dict[ntype_index]}', fontsize=10)
-            axs[row_idx][1].set_xlabel("time lag [ms]")
+            axs[row_idx][1].set_xlabel("time lag [s]")
             axs[row_idx][1].set_ylabel("norm. autocorr.")
             if minimum:
                 axs[row_idx][1].vlines(xaxis[minimum], 0, 1, label=label_minimum, color='red')
