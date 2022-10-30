@@ -29,15 +29,26 @@ def bin(spiketime, no_bins):
     return A_t
 
 
-def count_spikes_for_neuron_type(spike_mon):
-    a = pd.Series([i for i in spike_mon.i], dtype=int)
-    return a.value_counts()
+def count_spikes_for_neuron_type(spike_mon, from_t=None, to_t=None):
+    spike_counts = {}
+
+    for index in spike_mon.spike_trains():
+        a = pd.Series(spike_mon.spike_trains()[index] / second)
+
+        if from_t is not None and to_t is not None:
+            a = a.loc[lambda x: (x >= from_t) & (x <= to_t)]
+
+        spike_counts[index] = a.size
+
+    return pd.Series(spike_counts)
 
 
 @check_units(sim_duration=ms)
-def compute_firing_rate_for_neuron_type(spike_mon, sim_duration):
-    spikes_for_i = count_spikes_for_neuron_type(spike_mon)
-    return (spikes_for_i / sim_duration) * Hz
+def compute_firing_rate_for_neuron_type(spike_mon, from_t, to_t):
+    spikes_for_i = count_spikes_for_neuron_type(spike_mon, from_t, to_t)
+    duration = to_t - from_t
+
+    return spikes_for_i / duration
 
 
 def compute_input_selectivity(inputs):
@@ -47,18 +58,21 @@ def compute_input_selectivity(inputs):
 
 
 @check_units(sim_duration=ms, result=1)
-def compute_output_selectivity_for_neuron_type(spike_mon, sim_duration):
-    rates_for_i = compute_firing_rate_for_neuron_type(spike_mon, sim_duration)
+def compute_output_selectivity_for_neuron_type(spike_mon, from_t, to_t):
+    rates_for_i = compute_firing_rate_for_neuron_type(spike_mon, from_t, to_t)
     assert len(rates_for_i) >= 2
 
     return np.abs(rates_for_i[0] - rates_for_i[1]) / (rates_for_i[0] + rates_for_i[1])
 
 
-def compute_interspike_intervals(spike_mon):
+def compute_interspike_intervals(spike_mon, from_t, to_t):
     by_neuron = []
 
     for neuron_index in spike_mon.spike_trains():
-        interspike_intervals = np.diff(spike_mon.spike_trains()[neuron_index])
+        spikes_for_neuron = pd.Series(spike_mon.spike_trains()[neuron_index] / second)
+        filterd_by_period = spikes_for_neuron.loc[lambda x: (x >= from_t) & (x <= to_t)]
+
+        interspike_intervals = np.diff(filterd_by_period)
         by_neuron.append(interspike_intervals)
 
     return by_neuron
@@ -105,3 +119,22 @@ def compute_autocorr_struct(interspike_intervals, no_bins):
         autocorr_sst["minimum"] = minimum_sst
 
     return autocorr_sst
+
+
+def compute_equilibrium_for_neuron_type(spike_mon, time_frame):
+    t = 0
+    last_spike_t = spike_mon.t[-1] / second if len(spike_mon.t) > 0 else t
+
+    current_firing_rate = None
+    while t < last_spike_t:
+        firing_rate = compute_firing_rate_for_neuron_type(spike_mon, t, t + time_frame)
+
+        if current_firing_rate is not None and firing_rate.equals(current_firing_rate) and current_firing_rate[
+            current_firing_rate == 0].size == 0:
+            current_firing_rate = firing_rate
+            break
+        else:
+            current_firing_rate = firing_rate
+            t += time_frame
+
+    return t, current_firing_rate

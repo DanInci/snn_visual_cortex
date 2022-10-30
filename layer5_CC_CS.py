@@ -21,6 +21,10 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True):
     # Model parameters
     ################################################################################
     ### General parameters
+    time_frame = 0.2  # Time frame for computing equlibrium time
+    no_bins = 10  # Number of bins for interspike intervals historgram
+    plot_only_from_equilibrium = True  # Plot graphs only from equilibrium time
+
     duration = p.duration  # Total simulation time
     sim_dt = p.sim_dt  # Integrator/sampling step
 
@@ -219,63 +223,80 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True):
     # Analysis and plotting
     ################################################################################
 
-    print("Plotting results ... ")
+    equilibrium_times = []
+    for idx, spike_mon in enumerate([spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv]):
+        t, firing_rate = hlp.compute_equilibrium_for_neuron_type(spike_mon, time_frame)
+        if firing_rate is not None:
+            print(f"Found for {index_to_ntype_dict[idx]} neurons")
 
-    plot_raster(spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv, output_folder='output', file_name='spike_raster_plot')
+        equilibrium_times.append(t)
 
-    plot_states(state_mon_cs, spike_mon_cs, spike_thld=V_t, output_folder='output', file_name='state_plot_CS')
-    plot_states(state_mon_cc, spike_mon_cc, spike_thld=V_t, output_folder='output', file_name='state_plot_CC')
-    plot_states(state_mon_sst, spike_mon_sst, spike_thld=V_t, output_folder='output', file_name='state_plot_SST')
-    plot_states(state_mon_pv, spike_mon_pv, spike_thld=V_t, output_folder='output', file_name='state_plot_PV')
+    equilibrium_t = max(equilibrium_times) * second
+    if equilibrium_t < duration:
+        print(f"Equilibrium for all neurons start at: {equilibrium_t}")
+    else:
+        print(f"WARNING: Equilibrium was not found during the duration of the simulation")
+
+    # Only compute properties of the system from equilibrium time to end simulation time
+    from_t = equilibrium_t
+    to_t = duration
+
+    print("Plotting results from equilibrium ... ")
+
+    plot_raster(spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv, plot_only_from_equilibrium, from_t, to_t, output_folder='output', file_name='spike_raster_plot')
+
+    plot_states(state_mon_cs, spike_mon_cs, V_t, plot_only_from_equilibrium, from_t, to_t, output_folder='output', file_name='state_plot_CS')
+    plot_states(state_mon_cc, spike_mon_cc, V_t, plot_only_from_equilibrium, from_t, to_t, output_folder='output', file_name='state_plot_CC')
+    plot_states(state_mon_sst, spike_mon_sst, V_t, plot_only_from_equilibrium, from_t, to_t, output_folder='output', file_name='state_plot_SST')
+    plot_states(state_mon_pv, spike_mon_pv, V_t, plot_only_from_equilibrium, from_t, to_t, output_folder='output', file_name='state_plot_PV')
 
     results = {}
 
     # Compute firing rate for each neuron group
 
-    results["firing_rates_cs"] = hlp.compute_firing_rate_for_neuron_type(spike_mon_cs, duration)
-    results["firing_rates_cc"] = hlp.compute_firing_rate_for_neuron_type(spike_mon_cc, duration)
-    results["firing_rates_sst"] = hlp.compute_firing_rate_for_neuron_type(spike_mon_sst, duration)
-    results["firing_rates_pv"] = hlp.compute_firing_rate_for_neuron_type(spike_mon_pv, duration)
+    results["firing_rates_cs"] = hlp.compute_firing_rate_for_neuron_type(spike_mon_cs, from_t, to_t)
+    results["firing_rates_cc"] = hlp.compute_firing_rate_for_neuron_type(spike_mon_cc, from_t, to_t)
+    results["firing_rates_sst"] = hlp.compute_firing_rate_for_neuron_type(spike_mon_sst, from_t, to_t)
+    results["firing_rates_pv"] = hlp.compute_firing_rate_for_neuron_type(spike_mon_pv, from_t, to_t)
 
     # Compute input & output selectivity for CC & CS neuron groups
 
     results["input_selectivity"] = hlp.compute_input_selectivity(I_ext_cs)
-    results["output_selectivity_cs"] = hlp.compute_output_selectivity_for_neuron_type(spike_mon_cs, duration)
-    results["output_selectivity_cc"] = hlp.compute_output_selectivity_for_neuron_type(spike_mon_cc, duration)
+    results["output_selectivity_cs"] = hlp.compute_output_selectivity_for_neuron_type(spike_mon_cs, from_t, to_t)
+    results["output_selectivity_cc"] = hlp.compute_output_selectivity_for_neuron_type(spike_mon_cc, from_t, to_t)
 
     # Compute inter-spike intervals for each neuron group
 
-    results["interspike_intervals_cs"] = np.concatenate(hlp.compute_interspike_intervals(spike_mon_cs), axis=0)
-    results["interspike_intervals_cc"] = np.concatenate(hlp.compute_interspike_intervals(spike_mon_cc), axis=0)
-    results["interspike_intervals_sst"] = np.concatenate(hlp.compute_interspike_intervals(spike_mon_sst), axis=0)
-    results["interspike_intervals_pv"] = np.concatenate(hlp.compute_interspike_intervals(spike_mon_pv), axis=0)
+    results["interspike_intervals_cs"] = np.concatenate(hlp.compute_interspike_intervals(spike_mon_cs, from_t, to_t), axis=0)
+    results["interspike_intervals_cc"] = np.concatenate(hlp.compute_interspike_intervals(spike_mon_cc, from_t, to_t), axis=0)
+    results["interspike_intervals_sst"] = np.concatenate(hlp.compute_interspike_intervals(spike_mon_sst, from_t, to_t), axis=0)
+    results["interspike_intervals_pv"] = np.concatenate(hlp.compute_interspike_intervals(spike_mon_pv, from_t, to_t), axis=0)
 
     # Compute auto-correlation for isi for each neuron group
-    NO_BINS = 10
     # for CS
-    autocorr_cs = hlp.compute_autocorr_struct(results["interspike_intervals_cs"], NO_BINS)
+    autocorr_cs = hlp.compute_autocorr_struct(results["interspike_intervals_cs"], no_bins)
     if autocorr_cs:
         results["acorr_min_cs"] = autocorr_cs["minimum"]
 
     # for CC
-    autocorr_cc = hlp.compute_autocorr_struct(results["interspike_intervals_cc"], NO_BINS)
+    autocorr_cc = hlp.compute_autocorr_struct(results["interspike_intervals_cc"], no_bins)
     if autocorr_cc:
         results["acorr_min_cc"] = autocorr_cc["minimum"]
 
 
     # for SST
-    autocorr_sst = hlp.compute_autocorr_struct(results["interspike_intervals_sst"], NO_BINS)
+    autocorr_sst = hlp.compute_autocorr_struct(results["interspike_intervals_sst"], no_bins)
     if autocorr_sst:
         results["acorr_min_sst"] = autocorr_sst["minimum"]
 
     # for PV
-    autocorr_pv = hlp.compute_autocorr_struct(results["interspike_intervals_pv"], NO_BINS)
+    autocorr_pv = hlp.compute_autocorr_struct(results["interspike_intervals_pv"], no_bins)
     if autocorr_pv:
         results["acorr_min_sst"] = autocorr_pv["minimum"]
 
     interspike_intervals = [results["interspike_intervals_cs"], results["interspike_intervals_cc"], results["interspike_intervals_sst"], results["interspike_intervals_pv"]]
     autocorr = [autocorr_cs, autocorr_cc, autocorr_sst, autocorr_pv]
-    plot_isi_histograms(interspike_intervals, autocorr=autocorr, output_folder='output', file_name='isi_histograms', no_bins=NO_BINS)
+    plot_isi_histograms(interspike_intervals, autocorr=autocorr, output_folder='output', file_name='isi_histograms', no_bins=no_bins)
 
     return results
 
