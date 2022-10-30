@@ -77,7 +77,7 @@ def plot_states(state_mon, spike_mon, spike_thld, output_folder=None, file_name=
         plt.savefig('%s/%s.pdf' % (output_folder, file_name), bbox_inches='tight')
 
 
-def plot_isi_histograms(interspike_intervals, autocorr=None, output_folder=None, file_name='isi_histograms'):
+def plot_isi_histograms(interspike_intervals, autocorr=None, output_folder=None, file_name='isi_histograms', no_bins=50):
     columns = 2
     rows = len(interspike_intervals)
 
@@ -96,7 +96,7 @@ def plot_isi_histograms(interspike_intervals, autocorr=None, output_folder=None,
             label_minimum = f"maxISI {str(np.round(xaxis[minimum], 4))} s"
 
         # plot histogram of neuron group
-        n, bins, patches = axs[row_idx][0].hist(interspike_intervals_i, bins=50)
+        n, bins, patches = axs[row_idx][0].hist(interspike_intervals_i, bins=no_bins)
         axs[row_idx][0].axis(ymin=0)
         axs[row_idx][0].set_title(f'Neuron group {index_to_ntype_dict[ntype_index]}', fontsize=10)
         axs[row_idx][0].set_xlabel("ISI [s]", fontsize=10)

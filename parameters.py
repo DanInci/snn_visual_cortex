@@ -2,7 +2,7 @@ from brian2 import *
 
 default = {
     ### General parameters
-    "duration": 1 * second,  # Total simulation time
+    "duration": 10 * second,  # Total simulation time
     "sim_dt":   0.1 * ms,  # Integrator/sampling step
 
     "N_sst": 2,  # Number of SST neurons (inhibitory)
@@ -60,10 +60,10 @@ default = {
     "pPV_SST":   1,  #0.14,
 
     ### External Input
-    "I_ext_sst":    [0*pA, 0*pA],
-    "I_ext_pv":     [0*pA, 0*pA],
-    "I_ext_cc":     [500*pA, 500*pA * 1.05],
-    "I_ext_cs":     [500*pA, 500*pA * 1.05],
+    "I_ext_sst":    [0*nS, 0*nS],
+    "I_ext_pv":     [0*nS, 0*nS],
+    "I_ext_cc":     [50*nS, 50*nS * 1.05],
+    "I_ext_cs":     [50*nS, 50*nS * 1.05],
 
     "lambda_cc":  10*Hz,
     "lambda_cs":  10*Hz

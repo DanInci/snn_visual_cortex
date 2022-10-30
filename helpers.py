@@ -14,9 +14,11 @@ def sigmoid(x):
     return 1/(1+exp(-(-x-E_d)/D_d))
 
 
-def bin(spiketime, dt):
+def bin(spiketime, no_bins):
     if len(spiketime) == 0:
         return []
+
+    dt = (spiketime[-1] - spiketime[0])/no_bins # compute bin dt based on histogram's number of bins
 
     spiketime = np.array(spiketime)-spiketime[0]
     indexes = np.round(spiketime/dt).astype(int)
@@ -90,15 +92,15 @@ def find_minimum_autocorr(acorr):
     return minimum
 
 
-def compute_autocorr_struct(interspike_intervals, bin_size=0.005):
+def compute_autocorr_struct(interspike_intervals, no_bins):
     autocorr_sst = None
 
-    binned_isi = bin(np.sort(interspike_intervals), bin_size)
+    binned_isi = bin(np.sort(interspike_intervals), no_bins)
     xaxis, acorr = compute_autocorr(binned_isi)
     if xaxis is not None and acorr is not None:
         autocorr_sst = {}
         minimum_sst = find_minimum_autocorr(acorr)
-        autocorr_sst["xaxis"] = xaxis * bin_size
+        autocorr_sst["xaxis"] = xaxis * no_bins
         autocorr_sst["acorr"] = acorr
         autocorr_sst["minimum"] = minimum_sst
 

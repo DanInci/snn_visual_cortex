@@ -81,7 +81,6 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True):
     # SST Neurons
     sst_neurons = NeuronGroup(N_sst, model=eqs_sst_inh, threshold='v > V_t',
                               reset='v = E_l', refractory=8.3 * ms, method='euler')
-    sst_neurons.set_states({'I_external': I_ext_sst})
     sst_neurons.v = 'E_l + rand()*(V_t-E_l)'
     sst_neurons.g_e = 'rand()*w_e'
     sst_neurons.g_i = 'rand()*w_i'
@@ -89,7 +88,6 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True):
     # PV Neurons
     pv_neurons = NeuronGroup(N_pv, model=eqs_pv_inh, threshold='v > V_t',
                              reset='v = E_l', refractory=8.3 * ms, method='euler')
-    pv_neurons.set_states({'I_external': I_ext_pv})
     pv_neurons.v = 'E_l + rand()*(V_t-E_l)'
     pv_neurons.g_e = 'rand()*w_e'
     pv_neurons.g_i = 'rand()*w_i'
@@ -103,8 +101,8 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True):
     cs_neurons.g_is = cs_neurons.g_id = 'rand()*w_i'
 
     # Poisson input to CS neurons
-    cs_neurons_p1 = PoissonInput(cs_neurons[0], 'I_external', N=1, rate=lambda_cs, weight=I_ext_cs[0])
-    cs_neurons_p2 = PoissonInput(cs_neurons[1], 'I_external', N=1, rate=lambda_cs, weight=I_ext_cs[1])
+    cs_neurons_p1 = PoissonInput(cs_neurons[0], 'g_es', N=1, rate=lambda_cs, weight=I_ext_cs[0])
+    cs_neurons_p2 = PoissonInput(cs_neurons[1], 'g_es', N=1, rate=lambda_cs, weight=I_ext_cs[1])
 
     # CC Neurons
     cc_neurons = NeuronGroup(N_cc, model=eqs_exc, threshold='v_s > V_t',
@@ -115,8 +113,8 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True):
     cc_neurons.g_is = cc_neurons.g_id = 'rand()*w_i'
 
     # Poisson input to CC neurons
-    cc_neurons_p1 = PoissonInput(cc_neurons[0], 'I_external', N=1, rate=lambda_cc, weight=I_ext_cc[0])
-    cc_neurons_p2 = PoissonInput(cc_neurons[1], 'I_external', N=1, rate=lambda_cc, weight=I_ext_cc[1])
+    cc_neurons_p1 = PoissonInput(cc_neurons[0], 'g_es', N=1, rate=lambda_cc, weight=I_ext_cc[0])
+    cc_neurons_p2 = PoissonInput(cc_neurons[1], 'g_es', N=1, rate=lambda_cc, weight=I_ext_cc[1])
 
     # ##############################################################################
     # # Synapses & Connections
@@ -253,30 +251,31 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True):
     results["interspike_intervals_pv"] = np.concatenate(hlp.compute_interspike_intervals(spike_mon_pv), axis=0)
 
     # Compute auto-correlation for isi for each neuron group
+    NO_BINS = 10
     # for CS
-    autocorr_cs = hlp.compute_autocorr_struct(results["interspike_intervals_cs"])
+    autocorr_cs = hlp.compute_autocorr_struct(results["interspike_intervals_cs"], NO_BINS)
     if autocorr_cs:
         results["acorr_min_cs"] = autocorr_cs["minimum"]
 
     # for CC
-    autocorr_cc = hlp.compute_autocorr_struct(results["interspike_intervals_cc"])
+    autocorr_cc = hlp.compute_autocorr_struct(results["interspike_intervals_cc"], NO_BINS)
     if autocorr_cc:
         results["acorr_min_cc"] = autocorr_cc["minimum"]
 
 
     # for SST
-    autocorr_sst = hlp.compute_autocorr_struct(results["interspike_intervals_sst"])
+    autocorr_sst = hlp.compute_autocorr_struct(results["interspike_intervals_sst"], NO_BINS)
     if autocorr_sst:
         results["acorr_min_sst"] = autocorr_sst["minimum"]
 
     # for PV
-    autocorr_pv = hlp.compute_autocorr_struct(results["interspike_intervals_pv"])
+    autocorr_pv = hlp.compute_autocorr_struct(results["interspike_intervals_pv"], NO_BINS)
     if autocorr_pv:
         results["acorr_min_sst"] = autocorr_pv["minimum"]
 
     interspike_intervals = [results["interspike_intervals_cs"], results["interspike_intervals_cc"], results["interspike_intervals_sst"], results["interspike_intervals_pv"]]
     autocorr = [autocorr_cs, autocorr_cc, autocorr_sst, autocorr_pv]
-    plot_isi_histograms(interspike_intervals, autocorr=autocorr, output_folder='output', file_name='isi_histograms')
+    plot_isi_histograms(interspike_intervals, autocorr=autocorr, output_folder='output', file_name='isi_histograms', no_bins=NO_BINS)
 
     return results
 
