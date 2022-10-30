@@ -14,11 +14,9 @@ def sigmoid(x):
     return 1/(1+exp(-(-x-E_d)/D_d))
 
 
-def bin(spiketime, no_bins):
+def bin(spiketime, dt):
     if len(spiketime) == 0:
         return []
-
-    dt = (spiketime[-1] - spiketime[0])/no_bins # compute bin dt based on histogram's number of bins
 
     spiketime = np.array(spiketime)-spiketime[0]
     indexes = np.round(spiketime/dt).astype(int)
@@ -109,12 +107,14 @@ def find_minimum_autocorr(acorr):
 def compute_autocorr_struct(interspike_intervals, no_bins):
     autocorr_sst = None
 
-    binned_isi = bin(np.sort(interspike_intervals), no_bins)
+    sorted_isi = np.sort(interspike_intervals)
+    bin_dt = (sorted_isi[-1] - sorted_isi[0]) / no_bins if len(sorted_isi) > 0 else 0.01  # compute bin dt based on histogram's number of bins
+    binned_isi = bin(sorted_isi, bin_dt)
     xaxis, acorr = compute_autocorr(binned_isi)
     if xaxis is not None and acorr is not None:
         autocorr_sst = {}
         minimum_sst = find_minimum_autocorr(acorr)
-        autocorr_sst["xaxis"] = xaxis * no_bins
+        autocorr_sst["xaxis"] = xaxis * bin_dt
         autocorr_sst["acorr"] = acorr
         autocorr_sst["minimum"] = minimum_sst
 
@@ -138,3 +138,55 @@ def compute_equilibrium_for_neuron_type(spike_mon, time_frame):
             t += time_frame
 
     return t, current_firing_rate
+
+
+def compute_burst_mask(spikes, maxISI):
+    isi = np.diff(spikes)
+    mask = np.zeros(len(spikes))
+
+    for i, isi_value in enumerate(isi):
+        if isi_value <= maxISI:
+            # also the next index because the isi vector has offset of 1 compare to mask/spikes
+            mask[i] = mask[i + 1] = 1
+
+    return mask
+
+
+def compute_burst_trains(spike_mon, maxISI):
+    burst_trains = {}
+    for neuron_index in spike_mon.spike_trains():
+        burst_mask = compute_burst_mask(spike_mon.spike_trains()[neuron_index], maxISI)
+        burst_trains[neuron_index] = burst_mask
+
+    return burst_trains
+
+
+def compute_burst_lengths(burst_mask):
+    "count how many series of consecutive occurances of 1 appear"
+
+    burst_lengths = []
+    idx = 0
+    len_burst_mask = len(burst_mask)
+
+    while idx < len_burst_mask:
+        if burst_mask[idx] == 1:
+            burst_length = 0
+
+            while idx < len_burst_mask and burst_mask[idx] == 1:  # iterate till the end of series
+                burst_length += 1
+                idx += 1
+
+            burst_lengths.append(burst_length)
+
+        idx += 1
+
+    return burst_lengths
+
+
+def compute_burst_lengths_by_neuron_group(burst_trains):
+    burst_lengths = []
+    for neuron_index in burst_trains:
+        burst_lengths_by_neuron = compute_burst_lengths(burst_trains[neuron_index])
+        burst_lengths.extend(burst_lengths_by_neuron)
+
+    return burst_lengths

@@ -296,7 +296,32 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True):
 
     interspike_intervals = [results["interspike_intervals_cs"], results["interspike_intervals_cc"], results["interspike_intervals_sst"], results["interspike_intervals_pv"]]
     autocorr = [autocorr_cs, autocorr_cc, autocorr_sst, autocorr_pv]
-    plot_isi_histograms(interspike_intervals, autocorr=autocorr, output_folder='output', file_name='isi_histograms', no_bins=no_bins)
+    plot_isi_histograms(interspike_intervals, no_bins, autocorr=autocorr, output_folder='output', file_name='isi_histograms')
+
+    # Detect bursts
+    # for CS
+    if autocorr_cs:
+        maxISI_cs = autocorr_cs["xaxis"][autocorr_cs["minimum"]] if autocorr_cs["minimum"] else None
+        burst_trains_cs = hlp.compute_burst_trains(spike_mon_cs, maxISI_cs * second) if maxISI_cs else {}
+        results["burst_lengths_cs"] = hlp.compute_burst_lengths_by_neuron_group(burst_trains_cs)
+
+    # for CC
+    if autocorr_cc:
+        maxISI_cc = autocorr_cc["xaxis"][autocorr_cc["minimum"]] if autocorr_cc["minimum"] else None
+        burst_trains_cc = hlp.compute_burst_trains(spike_mon_cc, maxISI_cc * second) if maxISI_cc else {}
+        results["burst_lengths_cc"] = hlp.compute_burst_lengths_by_neuron_group(burst_trains_cc)
+
+    # for SST
+    if autocorr_sst:
+        maxISI_sst = autocorr_sst["xaxis"][autocorr_sst["minimum"]] if autocorr_sst["minimum"] else None
+        burst_trains_sst = hlp.compute_burst_trains(spike_mon_sst, maxISI_sst * second) if maxISI_sst else {}
+        results["burst_lengths_sst"] = hlp.compute_burst_lengths_by_neuron_group(burst_trains_sst)
+
+    # for PV
+    if autocorr_pv:
+        maxISI_pv = autocorr_pv["xaxis"][autocorr_pv["minimum"]] if autocorr_pv["minimum"] else None
+        burst_trains_pv = hlp.compute_burst_trains(spike_mon_pv, maxISI_pv * second) if maxISI_pv else {}
+        results["burst_lengths_pv"] = hlp.compute_burst_lengths_by_neuron_group(burst_trains_pv)
 
     return results
 
@@ -312,3 +337,8 @@ print(f'Avg firing rate for PV neurons: {np.mean(results["firing_rates_pv"]) * H
 print(f'Input selectivity: {results["input_selectivity"]}')
 print(f'Output selectivity CS: {results["output_selectivity_cs"]}')
 print(f'Output selectivity CC: {results["output_selectivity_cc"]}')
+
+print(f'Burst lengths vector for CS neurons: {results.get("burst_lengths_cs")}')
+print(f'Burst lengths vector for CC neurons: {results.get("burst_lengths_cc")}')
+print(f'Burst lengths vector for SST neurons: {results.get("burst_lengths_sst")}')
+print(f'Burst lengths vector for PV neurons: {results.get("burst_lengths_pv")}')

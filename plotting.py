@@ -89,7 +89,7 @@ def plot_states(state_mon, spike_mon, spike_thld,
         plt.savefig('%s/%s.pdf' % (output_folder, file_name), bbox_inches='tight')
 
 
-def plot_isi_histograms(interspike_intervals, autocorr=None, output_folder=None, file_name='isi_histograms', no_bins=50):
+def plot_isi_histograms(interspike_intervals, no_bins, autocorr=None, output_folder=None, file_name='isi_histograms'):
     columns = 2
     rows = len(interspike_intervals)
 
