@@ -16,8 +16,9 @@ index_to_ntype_dict = {
 }
 
 
-def plot_raster(spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv, output_folder=None,
-                file_name='spike_raster_plot'):
+def plot_raster(spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv,
+                plot_only_from_equilibrium=False, from_t=None, to_t=None,
+                output_folder=None, file_name='spike_raster_plot'):
     """ Plots the spikes """
 
     plt.plot(spike_mon_cs.t / ms, spike_mon_cs.i, '.b', label='CS')
@@ -32,6 +33,9 @@ def plot_raster(spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv, output_
     plt.legend(loc='best')
     plt.title('')
 
+    if plot_only_from_equilibrium:
+        plt.xlim(left=from_t / ms, right=to_t / ms)
+
     if output_folder is not None:
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
@@ -39,7 +43,9 @@ def plot_raster(spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv, output_
         plt.savefig('%s/%s.pdf' % (output_folder, file_name), bbox_inches='tight')
 
 
-def plot_states(state_mon, spike_mon, spike_thld, output_folder=None, file_name='state_plot', record=0):
+def plot_states(state_mon, spike_mon, spike_thld,
+                plot_only_from_equilibrium=False, from_t=None, to_t=None,
+                output_folder=None, file_name='state_plot', record=0):
     """ Plots the variable states for a monitor """
 
     plt.figure(figsize=(18, 4))
@@ -59,6 +65,9 @@ def plot_states(state_mon, spike_mon, spike_thld, output_folder=None, file_name=
     plt.ylabel('potential (V)')
     plt.legend(loc='upper right')
 
+    if plot_only_from_equilibrium:
+        plt.xlim(left=from_t / ms, right=to_t / ms)
+
     plt.subplot(1, 2, 2)
 
     # plot conductance
@@ -70,6 +79,9 @@ def plot_states(state_mon, spike_mon, spike_thld, output_folder=None, file_name=
     plt.ylabel('Conductance (S)')
     plt.legend(loc='best')
 
+    if plot_only_from_equilibrium:
+        plt.xlim(left=from_t / ms, right=to_t / ms)
+
     if output_folder is not None:
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
@@ -77,7 +89,7 @@ def plot_states(state_mon, spike_mon, spike_thld, output_folder=None, file_name=
         plt.savefig('%s/%s.pdf' % (output_folder, file_name), bbox_inches='tight')
 
 
-def plot_isi_histograms(interspike_intervals, autocorr=None, output_folder=None, file_name='isi_histograms'):
+def plot_isi_histograms(interspike_intervals, no_bins, autocorr=None, output_folder=None, file_name='isi_histograms'):
     columns = 2
     rows = len(interspike_intervals)
 
@@ -96,7 +108,7 @@ def plot_isi_histograms(interspike_intervals, autocorr=None, output_folder=None,
             label_minimum = f"maxISI {str(np.round(xaxis[minimum], 4))} s"
 
         # plot histogram of neuron group
-        n, bins, patches = axs[row_idx][0].hist(interspike_intervals_i, bins=50)
+        n, bins, patches = axs[row_idx][0].hist(interspike_intervals_i, bins=no_bins)
         axs[row_idx][0].axis(ymin=0)
         axs[row_idx][0].set_title(f'Neuron group {index_to_ntype_dict[ntype_index]}', fontsize=10)
         axs[row_idx][0].set_xlabel("ISI [s]", fontsize=10)
