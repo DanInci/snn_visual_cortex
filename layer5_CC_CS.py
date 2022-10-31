@@ -21,7 +21,7 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True):
     # Model parameters
     ################################################################################
     ### General parameters
-    time_frame = 0.2  # Time frame for computing equlibrium time
+    time_frame = 0.1  # Time frame for computing equlibrium time
     no_bins = 10  # Number of bins for interspike intervals historgram
     plot_only_from_equilibrium = True  # Plot graphs only from equilibrium time
 
