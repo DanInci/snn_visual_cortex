@@ -275,12 +275,14 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
 
     print("Plotting results from equilibrium ... ")
 
-    plot_raster(spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv, plot_only_from_equilibrium, from_t, to_t, output_folder='output', file_name='spike_raster_plot')
+    output_folder = 'output/with_sst_soma' if sst_target_soma else 'output/without_sst_soma'
 
-    plot_states(state_mon_cs, spike_mon_cs, V_t, plot_only_from_equilibrium, from_t, to_t, output_folder='output', file_name='state_plot_CS')
-    plot_states(state_mon_cc, spike_mon_cc, V_t, plot_only_from_equilibrium, from_t, to_t, output_folder='output', file_name='state_plot_CC')
-    plot_states(state_mon_sst, spike_mon_sst, V_t, plot_only_from_equilibrium, from_t, to_t, output_folder='output', file_name='state_plot_SST')
-    plot_states(state_mon_pv, spike_mon_pv, V_t, plot_only_from_equilibrium, from_t, to_t, output_folder='output', file_name='state_plot_PV')
+    plot_raster(spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv, plot_only_from_equilibrium, from_t, to_t, output_folder=output_folder, file_name='spike_raster_plot')
+
+    plot_states(state_mon_cs, spike_mon_cs, V_t, plot_only_from_equilibrium, from_t, to_t, output_folder=output_folder, file_name='state_plot_CS')
+    plot_states(state_mon_cc, spike_mon_cc, V_t, plot_only_from_equilibrium, from_t, to_t, output_folder=output_folder, file_name='state_plot_CC')
+    plot_states(state_mon_sst, spike_mon_sst, V_t, plot_only_from_equilibrium, from_t, to_t, output_folder=output_folder, file_name='state_plot_SST')
+    plot_states(state_mon_pv, spike_mon_pv, V_t, plot_only_from_equilibrium, from_t, to_t, output_folder=output_folder, file_name='state_plot_PV')
 
     results = {}
 
@@ -328,7 +330,7 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
 
     interspike_intervals = [results["interspike_intervals_cs"], results["interspike_intervals_cc"], results["interspike_intervals_sst"], results["interspike_intervals_pv"]]
     autocorr = [autocorr_cs, autocorr_cc, autocorr_sst, autocorr_pv]
-    plot_isi_histograms(interspike_intervals, no_bins, autocorr=autocorr, output_folder='output', file_name='isi_histograms')
+    plot_isi_histograms(interspike_intervals, no_bins, autocorr=autocorr, output_folder=output_folder, file_name='isi_histograms')
 
     # Detect bursts
     # for CS
@@ -355,11 +357,15 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
         burst_trains_pv = hlp.compute_burst_trains(spike_mon_pv, maxISI_pv * second) if maxISI_pv else {}
         results["burst_lengths_pv"] = hlp.compute_burst_lengths_by_neuron_group(burst_trains_pv)
 
+
+    # save results to output folder
+    hlp.save_results_to_folder(results, output_folder=output_folder)
+
     return results
 
 
 params = default_params
-results = run_simulation(params, seed_val=12345, sst_target_soma=False, use_synaptic_probabilities=False)
+results = run_simulation(params, seed_val=12345, sst_target_soma=True, use_synaptic_probabilities=False)
 
 print(f'Avg firing rate for CS neurons: {np.mean(results["firing_rates_cs"]) * Hz}')
 print(f'Avg firing rate for CC neurons: {np.mean(results["firing_rates_cc"]) * Hz}')
