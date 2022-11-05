@@ -11,7 +11,7 @@ class Struct:
         self.__dict__.update(entries)
 
 
-def run_simulation(params=None, seed_val=12345, sst_target_soma=True):
+def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synaptic_probabilities=True):
     p = Struct(**params)
 
     start_scope()
@@ -61,10 +61,6 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True):
     E_d = p.E_d  # position control of threshold
     D_d = p.D_d  # sharpness control of threshold
 
-    ### Synapse parameters
-    w_e = p.w_e  # Excitatory synaptic conductance
-    w_i = p.w_i  # Inhibitory synaptic conductance
-
     ### External Input
     I_ext_sst = p.I_ext_sst
     I_ext_pv = p.I_ext_pv
@@ -73,6 +69,8 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True):
 
     lambda_cc = p.lambda_cc
     lambda_cs = p.lambda_cs
+    lambda_sst = p.lambda_sst
+    lambda_pv = p.lambda_pv
 
     ################################################################################
 
@@ -86,39 +84,39 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True):
     sst_neurons = NeuronGroup(N_sst, model=eqs_sst_inh, threshold='v > V_t',
                               reset='v = E_l', refractory=8.3 * ms, method='euler')
     sst_neurons.v = 'E_l + rand()*(V_t-E_l)'
-    sst_neurons.g_e = 'rand()*w_e'
-    sst_neurons.g_i = 'rand()*w_i'
+
+    ## Poisson input to SST neurons
+    for n_idx in range(N_sst):
+        sst_input_i = PoissonInput(sst_neurons, 'g_e', N=1, rate=lambda_sst, weight=I_ext_sst[n_idx] * nS)
 
     # PV Neurons
     pv_neurons = NeuronGroup(N_pv, model=eqs_pv_inh, threshold='v > V_t',
                              reset='v = E_l', refractory=8.3 * ms, method='euler')
     pv_neurons.v = 'E_l + rand()*(V_t-E_l)'
-    pv_neurons.g_e = 'rand()*w_e'
-    pv_neurons.g_i = 'rand()*w_i'
+
+    ## Poisson input to PV neurons
+    for n_idx in range(N_pv):
+        pv_input_i = PoissonInput(pv_neurons, 'g_e', N=1, rate=lambda_pv, weight=I_ext_pv[n_idx] * nS)
 
     # CS Neurons
     cs_neurons = NeuronGroup(N_cs, model=eqs_exc, threshold='v_s > V_t',
                              reset='v_s = E_l', refractory=8.3 * ms, method='euler')
     cs_neurons.v_s = 'E_l + rand()*(V_t-E_l)'
     cs_neurons.v_d = -70 * mV
-    cs_neurons.g_es = cs_neurons.g_ed = 'rand()*w_e'
-    cs_neurons.g_is = cs_neurons.g_id = 'rand()*w_i'
 
-    # Poisson input to CS neurons
-    cs_neurons_p1 = PoissonInput(cs_neurons[0], 'g_es', N=1, rate=lambda_cs, weight=I_ext_cs[0])
-    cs_neurons_p2 = PoissonInput(cs_neurons[1], 'g_es', N=1, rate=lambda_cs, weight=I_ext_cs[1])
+    ## Poisson input to CS neurons
+    for n_idx in range(N_cs):
+        cs_input_i = PoissonInput(cs_neurons, 'g_es', N=1, rate=lambda_cs, weight=I_ext_cs[n_idx] * nS)
 
     # CC Neurons
     cc_neurons = NeuronGroup(N_cc, model=eqs_exc, threshold='v_s > V_t',
                              reset='v_s = E_l', refractory=8.3 * ms, method='euler')
     cc_neurons.v_s = 'E_l + rand()*(V_t-E_l)'
     cc_neurons.v_d = -70 * mV
-    cc_neurons.g_es = cc_neurons.g_ed = 'rand()*w_e'
-    cc_neurons.g_is = cc_neurons.g_id = 'rand()*w_i'
 
-    # Poisson input to CC neurons
-    cc_neurons_p1 = PoissonInput(cc_neurons[0], 'g_es', N=1, rate=lambda_cc, weight=I_ext_cc[0])
-    cc_neurons_p2 = PoissonInput(cc_neurons[1], 'g_es', N=1, rate=lambda_cc, weight=I_ext_cc[1])
+    ## Poisson input to CC neurons
+    for n_idx in range(N_cc):
+        cc_input_i = PoissonInput(cc_neurons, 'g_es', N=1, rate=lambda_cc, weight=I_ext_cc[n_idx] * nS)
 
     # ##############################################################################
     # # Synapses & Connections
@@ -127,71 +125,105 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True):
     print("Defining synapses ... ")
 
     # SST <=> PV
-    conn_SST_PV = Synapses(sst_neurons, pv_neurons, on_pre='g_i+=w_i', name='SST_PV')  # inhibitory
-    conn_SST_PV.connect(p=p.pSST_PV)
-    conn_PV_SST = Synapses(pv_neurons, sst_neurons, on_pre='g_i+=w_i', name='PV_SST')  # inhibitory
-    conn_PV_SST.connect(p=p.pPV_SST)
+    conn_SST_PV = Synapses(sst_neurons, pv_neurons, model='w: 1', on_pre='g_i+=w*nS', name='SST_PV')  # inhibitory
+    conn_SST_PV.connect(p=p.wSST_PV if use_synaptic_probabilities else 1)
+    conn_SST_PV.w = p.wSST_PV
+
+    conn_PV_SST = Synapses(pv_neurons, sst_neurons, model='w: 1', on_pre='g_i+=w*nS', name='PV_SST')  # inhibitory
+    conn_PV_SST.connect(p=p.wPV_SST if use_synaptic_probabilities else 1)
+    conn_PV_SST.w = p.wPV_SST
 
     # PV <=> PYR soma
     ## target CS soma
-    conn_PV_CSsoma = Synapses(pv_neurons, cs_neurons, on_pre='g_is+=w_i', name='PV_CSsoma')  # inhibitory
-    conn_PV_CSsoma.connect(p=p.pPV_CS)
-    conn_CSsoma_PV = Synapses(cs_neurons, pv_neurons, on_pre='g_e+=w_e', name='CSsoma_PV')  # excitatory
-    conn_CSsoma_PV.connect(p=p.pCS_PV)
+    conn_PV_CSsoma = Synapses(pv_neurons, cs_neurons, model='w: 1', on_pre='g_is+=w*nS', name='PV_CSsoma')  # inhibitory
+    conn_PV_CSsoma.connect(p=p.wPV_CS if use_synaptic_probabilities else 1)
+    conn_PV_CSsoma.w = p.wPV_CS
+
+    conn_CSsoma_PV = Synapses(cs_neurons, pv_neurons, model='w: 1', on_pre='g_e+=w*nS', name='CSsoma_PV')  # excitatory
+    conn_CSsoma_PV.connect(p=p.wCS_PV if use_synaptic_probabilities else 1)
+    conn_CSsoma_PV.w = p.wCS_PV
 
     ## target CC soma
-    conn_PV_CCsoma = Synapses(pv_neurons, cc_neurons, on_pre='g_is+=w_i', name='PV_CCsoma')  # inhibitory
-    conn_PV_CCsoma.connect(p=p.pPV_CC)
-    conn_CCsoma_PV = Synapses(cc_neurons, pv_neurons, on_pre='g_e+=w_e', name='CCsoma_PV')  # excitatory
-    conn_CCsoma_PV.connect(p=p.pCC_PV)
+    conn_PV_CCsoma = Synapses(pv_neurons, cc_neurons, model='w: 1', on_pre='g_is+=w*nS', name='PV_CCsoma')  # inhibitory
+    conn_PV_CCsoma.connect(p=p.wPV_CC if use_synaptic_probabilities else 1)
+    conn_PV_CCsoma.w = p.wPV_CC
+
+    conn_CCsoma_PV = Synapses(cc_neurons, pv_neurons, model='w: 1', on_pre='g_e+=w*nS', name='CCsoma_PV')  # excitatory
+    conn_CCsoma_PV.connect(p=p.wCC_PV if use_synaptic_probabilities else 1)
+    conn_CCsoma_PV.w = p.wCC_PV
 
     # SST <=> PYR soma
     ## target CS soma
-    conn_SST_CSsoma = Synapses(sst_neurons, cs_neurons, on_pre='g_is+=w_i',
-                               name='SST_CSsoma')  # inhibitory (optional connection)
-    conn_SST_CSsoma.connect(p=p.pSST_CS if sst_target_soma else 0) # inhibitory (optional connection)
-    conn_CSsoma_SST = Synapses(cs_neurons, sst_neurons, on_pre='g_e+=w_e', name='CSsoma_SST')  # excitatory
-    conn_CSsoma_SST.connect(p=p.pCS_SST)
+    conn_SST_CSsoma = Synapses(sst_neurons, cs_neurons, model='w: 1', on_pre='g_is+=w*nS', name='SST_CSsoma')  # inhibitory (optional connection)
+    pSST_CS = 0
+    if sst_target_soma:
+        pSST_CS = p.wSST_CS if use_synaptic_probabilities else 1
+
+    conn_SST_CSsoma.connect(p=pSST_CS) # inhibitory (optional connection)
+    conn_SST_CSsoma.w = p.wSST_CS
+
+    conn_CSsoma_SST = Synapses(cs_neurons, sst_neurons, model='w: 1', on_pre='g_e+=w*nS', name='CSsoma_SST')  # excitatory
+    conn_CSsoma_SST.connect(p=p.wCS_SST if use_synaptic_probabilities else 1)
+    conn_CSsoma_SST.w = p.wCS_SST
 
     ## taget CC soma
-    conn_SST_CCsoma = Synapses(sst_neurons, cc_neurons, on_pre='g_is+=w_i',
-                               name='SST_CCsoma')  # inhibitory (optional connection)
-    conn_SST_CCsoma.connect(p=p.pSST_CC if sst_target_soma else 0)  # inhibitory (optional connection)
-    conn_CCsoma_SST = Synapses(cc_neurons, sst_neurons, on_pre='g_e+=w_e', name='CCsoma_SST')  # excitatory
-    conn_CCsoma_SST.connect(p=p.pCC_SST)
+    conn_SST_CCsoma = Synapses(sst_neurons, cc_neurons, model='w: 1', on_pre='g_is+=w*nS', name='SST_CCsoma')  # inhibitory (optional connection)
+    pSST_CC = 0
+    if sst_target_soma:
+        pSST_CC = p.wSST_CC if use_synaptic_probabilities else 1
+
+    conn_SST_CCsoma.connect(p=pSST_CC)  # inhibitory (optional connection)
+    conn_SST_CCsoma.w = p.wSST_CC
+
+    conn_CCsoma_SST = Synapses(cc_neurons, sst_neurons, model='w: 1', on_pre='g_e+=w*nS', name='CCsoma_SST')  # excitatory
+    conn_CCsoma_SST.connect(p=p.wCC_SST if use_synaptic_probabilities else 1)
+    conn_CCsoma_SST.w = p.wCC_SST
 
     # CC => CS
     ## target CS soma
-    conn_CC_CS = Synapses(cc_neurons, cs_neurons, on_pre='g_es+=w_e', name='CC_CSsoma')  # excitatory
-    conn_CC_CS.connect(p=p.pCC_CS)
+    conn_CCsoma_CSsoma = Synapses(cc_neurons, cs_neurons, model='w: 1', on_pre='g_es+=w*nS', name='CC_CSsoma')  # excitatory
+    conn_CCsoma_CSsoma.connect(p=p.wCC_CS if use_synaptic_probabilities else 1)
+    conn_CCsoma_CSsoma.w = p.wCC_CS
 
     # self connections
-    conn_CSsoma_CSsoma = Synapses(cs_neurons, cs_neurons, on_pre='g_es+=w_e', name='CSsoma_CSsoma')  # excitatory
-    conn_CSsoma_CSsoma.connect(p=p.pCS_CS)
+    ## CS soma self connection
+    conn_CSsoma_CSsoma = Synapses(cs_neurons, cs_neurons, model='w: 1', on_pre='g_es+=w*nS', name='CSsoma_CSsoma')  # excitatory
+    conn_CSsoma_CSsoma.connect(p=p.wCS_CS if use_synaptic_probabilities else 1)
+    conn_CSsoma_CSsoma.w = p.wCS_CS
+
     backprop_CS = Synapses(cs_neurons, cs_neurons, on_pre={'up': 'K += 1', 'down': 'K -=1'},
                            delay={'up': 0.5 * ms, 'down': 2 * ms}, name='backprop_CS')
     backprop_CS.connect(condition='i==j')  # Connect all CS neurons to themselves
 
-    conn_CCsoma_CCsoma = Synapses(cc_neurons, cc_neurons, on_pre='g_es+=w_e', name='CCsoma_CCsoma')  # excitatory
-    conn_CCsoma_CCsoma.connect(p=p.pCC_CC)
+    ## CC soma self connection
+    conn_CCsoma_CCsoma = Synapses(cc_neurons, cc_neurons, model='w: 1', on_pre='g_es+=w*nS', name='CCsoma_CCsoma')  # excitatory
+    conn_CCsoma_CCsoma.connect(p=p.wCC_CC if use_synaptic_probabilities else 1)
+    conn_CCsoma_CCsoma.w = p.wCC_CC
+
     backprop_CC = Synapses(cc_neurons, cc_neurons, on_pre={'up': 'K += 1', 'down': 'K -=1'},
                            delay={'up': 0.5 * ms, 'down': 2 * ms}, name='backprop_CC')
     backprop_CC.connect(condition='i==j')  # Connect all CC neurons to themselves
 
-    conn_SST_SST = Synapses(sst_neurons, sst_neurons, on_pre='g_i+=w_i', name='SST_SST')  # inhibitory
-    conn_SST_SST.connect(p=p.pSST_SST)
+    ## SST self connection
+    conn_SST_SST = Synapses(sst_neurons, sst_neurons, model='w: 1', on_pre='g_i+=w*nS', name='SST_SST')  # inhibitory
+    conn_SST_SST.connect(p=p.wSST_SST if use_synaptic_probabilities else 1)
+    conn_SST_SST.w = p.wSST_SST
 
-    conn_PV_PV = Synapses(pv_neurons, pv_neurons, on_pre='g_i+=w_i', name='PV_PV')  # inhibitory
-    conn_PV_PV.connect(p=p.pPV_PV)
+    ## PV self connection
+    conn_PV_PV = Synapses(pv_neurons, pv_neurons, model='w: 1', on_pre='g_i+=w*nS', name='PV_PV')  # inhibitory
+    conn_PV_PV.connect(p=p.wPV_PV if use_synaptic_probabilities else 1)
+    conn_PV_PV.w = p.wPV_PV
 
     # SST => PYR dendrite
     ## target CS dendrite
-    conn_SST_CSdendrite = Synapses(sst_neurons, cs_neurons, on_pre='g_id+=w_i', name='SST_CSdendrite')  # inhibitory
-    conn_SST_CSdendrite.connect(p=p.pSST_CS)  # not sure about this here
+    conn_SST_CSdendrite = Synapses(sst_neurons, cs_neurons, model='w: 1', on_pre='g_id+=w*nS', name='SST_CSdendrite')  # inhibitory
+    conn_SST_CSdendrite.connect(p=p.wSST_CS if use_synaptic_probabilities else 1)  # not sure about this here
+    conn_SST_CSdendrite.w = p.wSST_CS
 
     ## target CC dendrite
-    conn_SST_CCdendrite = Synapses(sst_neurons, cc_neurons, on_pre='g_id+=w_i', name='SST_CCdendrite')  # inhibitory
-    conn_SST_CCdendrite.connect(p=p.pSST_CC)  # not sure about this here
+    conn_SST_CCdendrite = Synapses(sst_neurons, cc_neurons, model='w: 1', on_pre='g_id+=w*nS', name='SST_CCdendrite')  # inhibitory
+    conn_SST_CCdendrite.connect(p=p.wSST_CC if use_synaptic_probabilities else 1)  # not sure about this here
+    conn_SST_CCdendrite.w = p.wSST_CC
 
     # ##############################################################################
     # # Monitors
@@ -327,7 +359,7 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True):
 
 
 params = default_params
-results = run_simulation(params, seed_val=12345)
+results = run_simulation(params, seed_val=12345, sst_target_soma=False, use_synaptic_probabilities=False)
 
 print(f'Avg firing rate for CS neurons: {np.mean(results["firing_rates_cs"]) * Hz}')
 print(f'Avg firing rate for CC neurons: {np.mean(results["firing_rates_cc"]) * Hz}')
