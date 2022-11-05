@@ -23,7 +23,10 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
     ### General parameters
     time_frame = 0.1  # Time frame for computing equlibrium time
     no_bins = 10  # Number of bins for interspike intervals historgram
+
     plot_only_from_equilibrium = True  # Plot graphs only from equilibrium time
+    recompute_equilibrium = True  # If true, will try and recompute equilibirum time, if not will use `default_equilibrium_time`
+    default_equilibrium_t = 5.6*second  # Default equilibirium time, will be used in case `recompute_equilibrium` is False. Should be set based on previous simulation results
 
     duration = p.duration  # Total simulation time
     sim_dt = p.sim_dt  # Integrator/sampling step
@@ -255,19 +258,23 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
     # Analysis and plotting
     ################################################################################
 
-    equilibrium_times = []
-    for idx, spike_mon in enumerate([spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv]):
-        t, firing_rate = hlp.compute_equilibrium_for_neuron_type(spike_mon, time_frame)
-        if firing_rate is not None:
-            print(f"Found for {index_to_ntype_dict[idx]} neurons")
+    if recompute_equilibrium:
+        equilibrium_times = []
+        for idx, spike_mon in enumerate([spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv]):
+            t, firing_rate = hlp.compute_equilibrium_for_neuron_type(spike_mon, time_frame)
+            if firing_rate is not None:
+                print(f"Found for {index_to_ntype_dict[idx]} neurons")
 
-        equilibrium_times.append(t)
+            equilibrium_times.append(t)
 
-    equilibrium_t = max(equilibrium_times) * second
-    if equilibrium_t < duration:
-        print(f"Equilibrium for all neurons start at: {equilibrium_t}")
+        equilibrium_t = max(equilibrium_times) * second
+        if equilibrium_t < duration:
+            print(f"Equilibrium for all neurons start at: {equilibrium_t}")
+        else:
+            print(f"WARNING: Equilibrium was not found during the duration of the simulation")
     else:
-        print(f"WARNING: Equilibrium was not found during the duration of the simulation")
+        print(f"Skipping recalculating equilibrium time. Using default equilibrium time={default_equilibrium_t}")
+        equilibrium_t = default_equilibrium_t
 
     # Only compute properties of the system from equilibrium time to end simulation time
     from_t = equilibrium_t
@@ -365,7 +372,7 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
 
 
 params = default_params
-results = run_simulation(params, seed_val=12345, sst_target_soma=True, use_synaptic_probabilities=False)
+results = run_simulation(params, seed_val=12345, sst_target_soma=False, use_synaptic_probabilities=False)
 
 print(f'Avg firing rate for CS neurons: {np.mean(results["firing_rates_cs"]) * Hz}')
 print(f'Avg firing rate for CC neurons: {np.mean(results["firing_rates_cc"]) * Hz}')

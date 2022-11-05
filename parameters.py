@@ -56,8 +56,8 @@ default = {
     "wPV_SST":   0.14,
 
     ### External Input
-    "I_ext_sst":    [0,  0],
-    "I_ext_pv":     [0,  0],
+    "I_ext_sst":    [50, 50 * 1.05],
+    "I_ext_pv":     [50, 50 * 1.05],
     "I_ext_cc":     [50, 50 * 1.05],
     "I_ext_cs":     [50, 50 * 1.05],
 
