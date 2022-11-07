@@ -11,7 +11,7 @@ class Struct:
         self.__dict__.update(entries)
 
 
-def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synaptic_probabilities=True):
+def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synaptic_probabilities=True, output_folder=None):
     p = Struct(**params)
 
     start_scope()
@@ -282,8 +282,6 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
 
     print("Plotting results from equilibrium ... ")
 
-    output_folder = 'output/with_sst_soma' if sst_target_soma else 'output/without_sst_soma'
-
     plot_raster(spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv, plot_only_from_equilibrium, from_t, to_t, output_folder=output_folder, file_name='spike_raster_plot')
 
     plot_states(state_mon_cs, spike_mon_cs, V_t, plot_only_from_equilibrium, from_t, to_t, output_folder=output_folder, file_name='state_plot_CS')
@@ -364,26 +362,13 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
         burst_trains_pv = hlp.compute_burst_trains(spike_mon_pv, maxISI_pv * second) if maxISI_pv else {}
         results["burst_lengths_pv"] = hlp.compute_burst_lengths_by_neuron_group(burst_trains_pv)
 
-
-    # save results to output folder
-    hlp.save_results_to_folder(results, output_folder=output_folder)
-
     return results
 
 
 params = default_params
-results = run_simulation(params, seed_val=12345, sst_target_soma=False, use_synaptic_probabilities=False)
 
-print(f'Avg firing rate for CS neurons: {np.mean(results["firing_rates_cs"]) * Hz}')
-print(f'Avg firing rate for CC neurons: {np.mean(results["firing_rates_cc"]) * Hz}')
-print(f'Avg firing rate for SST neurons: {np.mean(results["firing_rates_sst"]) * Hz}')
-print(f'Avg firing rate for PV neurons: {np.mean(results["firing_rates_pv"]) * Hz}')
+results_with_sst_to_soma = run_simulation(params, seed_val=12345, sst_target_soma=True, use_synaptic_probabilities=True, output_folder='output/with_sst_soma')
+hlp.save_results_to_folder(results_with_sst_to_soma, output_folder='output/with_sst_soma')
 
-print(f'Input selectivity: {results["input_selectivity"]}')
-print(f'Output selectivity CS: {results["output_selectivity_cs"]}')
-print(f'Output selectivity CC: {results["output_selectivity_cc"]}')
-
-print(f'Burst lengths vector for CS neurons: {results.get("burst_lengths_cs")}')
-print(f'Burst lengths vector for CC neurons: {results.get("burst_lengths_cc")}')
-print(f'Burst lengths vector for SST neurons: {results.get("burst_lengths_sst")}')
-print(f'Burst lengths vector for PV neurons: {results.get("burst_lengths_pv")}')
+results_without_sst_to_soma = run_simulation(params, seed_val=12345, sst_target_soma=False, use_synaptic_probabilities=True, output_folder='output/without_sst_soma')
+hlp.save_results_to_folder(results_without_sst_to_soma, output_folder='output/without_sst_soma')

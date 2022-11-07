@@ -1,14 +1,19 @@
 from brian2 import *
 
+
+def flatten(l):
+    return [item for sublist in l for item in sublist]
+
+
 default = {
     ### General parameters
-    "duration": 10 * second,  # Total simulation time
+    "duration": 3 * second,  # Total simulation time
     "sim_dt":   0.1 * ms,  # Integrator/sampling step
 
-    "N_sst": 2,  # Number of SST neurons (inhibitory)
-    "N_pv":  2,  # Number of PV neurons (inhibitory)
-    "N_cc":  2,  # Number of CC neurons (excitatory)
-    "N_cs":  2,  # Number of CS neurons (excitatory)
+    "N_sst": 10,  # Number of SST neurons (inhibitory)
+    "N_pv":  10,  # Number of PV neurons (inhibitory)
+    "N_cc":  40,  # Number of CC neurons (excitatory)
+    "N_cs":  40,  # Number of CS neurons (excitatory)
 
     ### Neuron parameters
     "tau_S":    16 * ms,
@@ -56,10 +61,10 @@ default = {
     "wPV_SST":   0.14,
 
     ### External Input
-    "I_ext_sst":    [50, 50 * 1.05],
-    "I_ext_pv":     [50, 50 * 1.05],
-    "I_ext_cc":     [50, 50 * 1.05],
-    "I_ext_cs":     [50, 50 * 1.05],
+    "I_ext_sst":    flatten([[50, 50*1.05] for i in range(0, 100, 2)]),
+    "I_ext_pv":     flatten([[50, 50*1.05] for i in range(0, 100, 2)]),
+    "I_ext_cc":     flatten([[50, 50*1.05] for i in range(0, 400, 2)]),
+    "I_ext_cs":     flatten([[50, 50*1.05] for i in range(0, 400, 2)]),
 
     "lambda_cc":  10*Hz,
     "lambda_cs":  10*Hz,
