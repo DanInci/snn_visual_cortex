@@ -1,5 +1,8 @@
 from brian2 import *
+from tqdm import tqdm
 import pandas as pd
+import json
+import os
 
 from scipy.signal import argrelextrema
 
@@ -30,7 +33,7 @@ def bin(spiketime, dt):
 def count_spikes_for_neuron_type(spike_mon, from_t=None, to_t=None):
     spike_counts = {}
 
-    for index in spike_mon.spike_trains():
+    for index in tqdm(spike_mon.spike_trains()):
         a = pd.Series(spike_mon.spike_trains()[index] / second)
 
         if from_t is not None and to_t is not None:
@@ -66,7 +69,7 @@ def compute_output_selectivity_for_neuron_type(spike_mon, from_t, to_t):
 def compute_interspike_intervals(spike_mon, from_t, to_t):
     by_neuron = []
 
-    for neuron_index in spike_mon.spike_trains():
+    for neuron_index in tqdm(spike_mon.spike_trains()):
         spikes_for_neuron = pd.Series(spike_mon.spike_trains()[neuron_index] / second)
         filterd_by_period = spikes_for_neuron.loc[lambda x: (x >= from_t) & (x <= to_t)]
 
@@ -154,7 +157,7 @@ def compute_burst_mask(spikes, maxISI):
 
 def compute_burst_trains(spike_mon, maxISI):
     burst_trains = {}
-    for neuron_index in spike_mon.spike_trains():
+    for neuron_index in tqdm(spike_mon.spike_trains()):
         burst_mask = compute_burst_mask(spike_mon.spike_trains()[neuron_index], maxISI)
         burst_trains[neuron_index] = burst_mask
 
@@ -190,3 +193,28 @@ def compute_burst_lengths_by_neuron_group(burst_trains):
         burst_lengths.extend(burst_lengths_by_neuron)
 
     return burst_lengths
+
+
+def save_results_to_folder(results, output_folder=None, file_name='results.json'):
+    if output_folder is not None:
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+
+        dump = {}
+        dump['avg_firing_rate_cs'] = '%.3f' % np.mean(results["firing_rates_cs"])
+        dump['avg_firing_rate_cc'] = '%.3f' % np.mean(results["firing_rates_cc"])
+        dump['avg_firing_rate_sst'] = '%.3f' % np.mean(results["firing_rates_sst"])
+        dump['avg_firing_rate_pv'] = '%.3f' % np.mean(results["firing_rates_pv"])
+
+        dump['input_selectivity'] = '%.3f' % results["input_selectivity"]
+        dump['output_selectivity_cs'] = '%.3f' % results["output_selectivity_cs"]
+        dump['output_selectivity_cc'] = '%.3f' % results["output_selectivity_cc"]
+
+        dump["burst_lengths_cs"] = results.get("burst_lengths_cs")
+        dump["burst_lengths_cc"] = results.get("burst_lengths_cc")
+        dump["burst_lengths_sst"] = results.get("burst_lengths_sst")
+        dump["burst_lengths_pv"] = results.get("burst_lengths_pv")
+
+        json_file = open(f'{output_folder}/{file_name}', 'w')
+        json_file.write(json.dumps(dump, indent=4))
+        json_file.close()

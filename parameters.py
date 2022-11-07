@@ -1,14 +1,19 @@
 from brian2 import *
 
+
+def flatten(l):
+    return [item for sublist in l for item in sublist]
+
+
 default = {
     ### General parameters
-    "duration": 10 * second,  # Total simulation time
+    "duration": 3 * second,  # Total simulation time
     "sim_dt":   0.1 * ms,  # Integrator/sampling step
 
-    "N_sst": 2,  # Number of SST neurons (inhibitory)
-    "N_pv":  2,  # Number of PV neurons (inhibitory)
-    "N_cc":  2,  # Number of CC neurons (excitatory)
-    "N_cs":  2,  # Number of CS neurons (excitatory)
+    "N_sst": 10,  # Number of SST neurons (inhibitory)
+    "N_pv":  10,  # Number of PV neurons (inhibitory)
+    "N_cc":  40,  # Number of CC neurons (excitatory)
+    "N_cs":  40,  # Number of CS neurons (excitatory)
 
     ### Neuron parameters
     "tau_S":    16 * ms,
@@ -38,33 +43,31 @@ default = {
     "E_d":  -38 * mV,  # position control of threshold
     "D_d":    6 * mV,  # sharpness control of threshold
 
-    ### Synapse parameters
-    "w_e": 0.05 * nS,  # Excitatory synaptic conductance
-    "w_i":  1.0 * nS,  # Inhibitory synaptic conductance
-
-    ### Connection probabilities
-    "pCS_CS":    1,  #0.16,
-    "pCS_SST":   1,  #0.23,
-    "pCS_PV":    1,  #0.18,
-    "pSST_CS":   1,  #0.52,
-    "pPV_CS":    1,  #0.43,
-    "pCC_CC":    1,  #0.06,
-    "pCC_SST":   1,  #0.26,
-    "pCC_PV":    1,  #0.22,
-    "pSST_CC":   1,  #0.13,
-    "pPV_CC":    1,  #0.38,
-    "pCC_CS":    1,  #0.09,
-    "pSST_PV":   1,  #0.29,
-    "pSST_SST":  1,  #0.1,
-    "pPV_PV":    1,  #0.5,
-    "pPV_SST":   1,  #0.14,
+    ### Synpatic connection weights (probabilities are derived)
+    "wCS_CS":    0.16,
+    "wCS_SST":   0.23,
+    "wCS_PV":    0.18,
+    "wSST_CS":   0.52,
+    "wPV_CS":    0.43,
+    "wCC_CC":    0.06,
+    "wCC_SST":   0.26,
+    "wCC_PV":    0.22,
+    "wSST_CC":   0.13,
+    "wPV_CC":    0.38,
+    "wCC_CS":    0.09,
+    "wSST_PV":   0.29,
+    "wSST_SST":  0.1,
+    "wPV_PV":    0.5,
+    "wPV_SST":   0.14,
 
     ### External Input
-    "I_ext_sst":    [0*nS, 0*nS],
-    "I_ext_pv":     [0*nS, 0*nS],
-    "I_ext_cc":     [50*nS, 50*nS * 1.05],
-    "I_ext_cs":     [50*nS, 50*nS * 1.05],
+    "I_ext_sst":    flatten([[50, 50*1.05] for i in range(0, 100, 2)]),
+    "I_ext_pv":     flatten([[50, 50*1.05] for i in range(0, 100, 2)]),
+    "I_ext_cc":     flatten([[50, 50*1.05] for i in range(0, 400, 2)]),
+    "I_ext_cs":     flatten([[50, 50*1.05] for i in range(0, 400, 2)]),
 
     "lambda_cc":  10*Hz,
-    "lambda_cs":  10*Hz
+    "lambda_cs":  10*Hz,
+    "lambda_sst":  10*Hz,
+    "lambda_pv":  10*Hz
 }
