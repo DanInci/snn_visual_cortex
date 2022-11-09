@@ -27,9 +27,9 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
 
     plot_only_from_equilibrium = True  # Plot graphs only from equilibrium time
     recompute_equilibrium = False  # If true, will try and recompute equilibirum time, if not will use `default_equilibrium_time`
-    default_equilibrium_t = 0*second  # Default equilibirium time, will be used in case `recompute_equilibrium` is False. Should be set based on previous simulation results
+    default_equilibrium_t = 5*second  # Default equilibirium time, will be used in case `recompute_equilibrium` is False. Should be set based on previous simulation results
 
-    duration = p.duration  # Total simulation time
+    sim_duration = p.duration  # Total simulation time
     sim_dt = p.sim_dt  # Integrator/sampling step
 
     N_sst = p.N_sst  # Number of SST neurons (inhibitory)
@@ -255,7 +255,7 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
 
     defaultclock.dt = sim_dt
 
-    run(duration, report='text')
+    run(sim_duration, report='text')
 
     ################################################################################
     # Analysis and plotting
@@ -271,7 +271,7 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
             equilibrium_times.append(t)
 
         equilibrium_t = max(equilibrium_times) * second
-        if equilibrium_t < duration:
+        if equilibrium_t < sim_duration:
             print(f"Equilibrium for all neurons start at: {equilibrium_t}")
         else:
             print(f"WARNING: Equilibrium was not found during the duration of the simulation")
@@ -281,11 +281,13 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
 
     # Only compute properties of the system from equilibrium time to end simulation time
     from_t = equilibrium_t
-    to_t = duration
+    to_t = sim_duration
 
     print("Plotting results from equilibrium ... ")
 
-    plot_raster(spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv, plot_only_from_equilibrium, from_t, to_t, output_folder=output_folder, file_name='spike_raster_plot')
+    raster_from_t = from_t if plot_only_from_equilibrium else 0
+    raster_to_t = min(raster_from_t + 3*second, sim_duration)
+    plot_raster(spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv, raster_from_t, raster_to_t, output_folder=output_folder, file_name='spike_raster_plot')
 
     plot_states(state_mon_cs, spike_mon_cs, V_t, plot_only_from_equilibrium, from_t, to_t, output_folder=output_folder, file_name='state_plot_CS')
     plot_states(state_mon_cc, spike_mon_cc, V_t, plot_only_from_equilibrium, from_t, to_t, output_folder=output_folder, file_name='state_plot_CC')
