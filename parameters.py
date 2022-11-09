@@ -43,22 +43,51 @@ default = {
     "E_d":  -38 * mV,  # position control of threshold
     "D_d":    6 * mV,  # sharpness control of threshold
 
-    ### Synpatic connection weights (probabilities are derived)
-    "wCS_CS":    0.16,
-    "wCS_SST":   0.23,
-    "wCS_PV":    0.18,
-    "wSST_CS":   0.52,
-    "wPV_CS":    0.43,
-    "wCC_CC":    0.06,
-    "wCC_SST":   0.26,
-    "wCC_PV":    0.22,
-    "wSST_CC":   0.13,
-    "wPV_CC":    0.38,
-    "wCC_CS":    0.09,
-    "wSST_PV":   0.29,
-    "wSST_SST":  0.1,
-    "wPV_PV":    0.5,
-    "wPV_SST":   0.14,
+    ### Synpatic connection weights & probabilities
+    "wCS_CS":    0.27,
+    "pCS_CS":    0.16,
+
+    "wCS_SST":   0.05,
+    "pCS_SST":   0.23,
+
+    "wCS_PV":    1.01,
+    "pCS_PV":    0.18,
+
+    "wSST_CS":   0.19,
+    "pSST_CS":   0.52,
+
+    "wPV_CS":    0.32,
+    "pPV_CS":    0.43,
+
+    "wCC_CC":    0.24,
+    "pCC_CC":    0.06,
+
+    "wCC_SST":   0.09,
+    "pCC_SST":   0.26,
+
+    "wCC_PV":    0.48,
+    "pCC_PV":    0.22,
+
+    "wSST_CC":   0.19,
+    "pSST_CC":   0.13,
+
+    "wPV_CC":    0.52,
+    "pPV_CC":    0.38,
+
+    "wCC_CS":    0.19,
+    "pCC_CS":    0.09,
+
+    "wSST_PV":   0.18,
+    "pSST_PV":   0.29,
+
+    "wSST_SST":  0.19,
+    "pSST_SST":  0.1,
+
+    "wPV_PV":    0.47,
+    "pPV_PV":    0.5,
+
+    "wPV_SST":   0.44,
+    "pPV_SST":   0.14,
 
     ### External Input
     "I_ext_sst":    flatten([[50, 50*1.05] for i in range(0, 100, 2)]),

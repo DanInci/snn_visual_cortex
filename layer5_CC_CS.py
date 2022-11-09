@@ -25,8 +25,8 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
     no_bins = 10  # Number of bins for interspike intervals historgram
 
     plot_only_from_equilibrium = True  # Plot graphs only from equilibrium time
-    recompute_equilibrium = True  # If true, will try and recompute equilibirum time, if not will use `default_equilibrium_time`
-    default_equilibrium_t = 5.6*second  # Default equilibirium time, will be used in case `recompute_equilibrium` is False. Should be set based on previous simulation results
+    recompute_equilibrium = False  # If true, will try and recompute equilibirum time, if not will use `default_equilibrium_time`
+    default_equilibrium_t = 0*second  # Default equilibirium time, will be used in case `recompute_equilibrium` is False. Should be set based on previous simulation results
 
     duration = p.duration  # Total simulation time
     sim_dt = p.sim_dt  # Integrator/sampling step
@@ -129,30 +129,30 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
 
     # SST <=> PV
     conn_SST_PV = Synapses(sst_neurons, pv_neurons, model='w: 1', on_pre='g_i+=w*nS', name='SST_PV')  # inhibitory
-    conn_SST_PV.connect(p=p.wSST_PV if use_synaptic_probabilities else 1)
+    conn_SST_PV.connect(p=p.pSST_PV if use_synaptic_probabilities else 1)
     conn_SST_PV.w = p.wSST_PV
 
     conn_PV_SST = Synapses(pv_neurons, sst_neurons, model='w: 1', on_pre='g_i+=w*nS', name='PV_SST')  # inhibitory
-    conn_PV_SST.connect(p=p.wPV_SST if use_synaptic_probabilities else 1)
+    conn_PV_SST.connect(p=p.pPV_SST if use_synaptic_probabilities else 1)
     conn_PV_SST.w = p.wPV_SST
 
     # PV <=> PYR soma
     ## target CS soma
     conn_PV_CSsoma = Synapses(pv_neurons, cs_neurons, model='w: 1', on_pre='g_is+=w*nS', name='PV_CSsoma')  # inhibitory
-    conn_PV_CSsoma.connect(p=p.wPV_CS if use_synaptic_probabilities else 1)
+    conn_PV_CSsoma.connect(p=p.pPV_CS if use_synaptic_probabilities else 1)
     conn_PV_CSsoma.w = p.wPV_CS
 
     conn_CSsoma_PV = Synapses(cs_neurons, pv_neurons, model='w: 1', on_pre='g_e+=w*nS', name='CSsoma_PV')  # excitatory
-    conn_CSsoma_PV.connect(p=p.wCS_PV if use_synaptic_probabilities else 1)
+    conn_CSsoma_PV.connect(p=p.pCS_PV if use_synaptic_probabilities else 1)
     conn_CSsoma_PV.w = p.wCS_PV
 
     ## target CC soma
     conn_PV_CCsoma = Synapses(pv_neurons, cc_neurons, model='w: 1', on_pre='g_is+=w*nS', name='PV_CCsoma')  # inhibitory
-    conn_PV_CCsoma.connect(p=p.wPV_CC if use_synaptic_probabilities else 1)
+    conn_PV_CCsoma.connect(p=p.pPV_CC if use_synaptic_probabilities else 1)
     conn_PV_CCsoma.w = p.wPV_CC
 
     conn_CCsoma_PV = Synapses(cc_neurons, pv_neurons, model='w: 1', on_pre='g_e+=w*nS', name='CCsoma_PV')  # excitatory
-    conn_CCsoma_PV.connect(p=p.wCC_PV if use_synaptic_probabilities else 1)
+    conn_CCsoma_PV.connect(p=p.pCC_PV if use_synaptic_probabilities else 1)
     conn_CCsoma_PV.w = p.wCC_PV
 
     # SST <=> PYR soma
@@ -160,38 +160,38 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
     conn_SST_CSsoma = Synapses(sst_neurons, cs_neurons, model='w: 1', on_pre='g_is+=w*nS', name='SST_CSsoma')  # inhibitory (optional connection)
     pSST_CS = 0
     if sst_target_soma:
-        pSST_CS = p.wSST_CS if use_synaptic_probabilities else 1
+        pSST_CS = p.pSST_CS if use_synaptic_probabilities else 1
 
     conn_SST_CSsoma.connect(p=pSST_CS) # inhibitory (optional connection)
     conn_SST_CSsoma.w = p.wSST_CS
 
     conn_CSsoma_SST = Synapses(cs_neurons, sst_neurons, model='w: 1', on_pre='g_e+=w*nS', name='CSsoma_SST')  # excitatory
-    conn_CSsoma_SST.connect(p=p.wCS_SST if use_synaptic_probabilities else 1)
+    conn_CSsoma_SST.connect(p=p.pCS_SST if use_synaptic_probabilities else 1)
     conn_CSsoma_SST.w = p.wCS_SST
 
     ## taget CC soma
     conn_SST_CCsoma = Synapses(sst_neurons, cc_neurons, model='w: 1', on_pre='g_is+=w*nS', name='SST_CCsoma')  # inhibitory (optional connection)
     pSST_CC = 0
     if sst_target_soma:
-        pSST_CC = p.wSST_CC if use_synaptic_probabilities else 1
+        pSST_CC = p.pSST_CC if use_synaptic_probabilities else 1
 
     conn_SST_CCsoma.connect(p=pSST_CC)  # inhibitory (optional connection)
     conn_SST_CCsoma.w = p.wSST_CC
 
     conn_CCsoma_SST = Synapses(cc_neurons, sst_neurons, model='w: 1', on_pre='g_e+=w*nS', name='CCsoma_SST')  # excitatory
-    conn_CCsoma_SST.connect(p=p.wCC_SST if use_synaptic_probabilities else 1)
+    conn_CCsoma_SST.connect(p=p.pCC_SST if use_synaptic_probabilities else 1)
     conn_CCsoma_SST.w = p.wCC_SST
 
     # CC => CS
     ## target CS soma
     conn_CCsoma_CSsoma = Synapses(cc_neurons, cs_neurons, model='w: 1', on_pre='g_es+=w*nS', name='CC_CSsoma')  # excitatory
-    conn_CCsoma_CSsoma.connect(p=p.wCC_CS if use_synaptic_probabilities else 1)
+    conn_CCsoma_CSsoma.connect(p=p.pCC_CS if use_synaptic_probabilities else 1)
     conn_CCsoma_CSsoma.w = p.wCC_CS
 
     # self connections
     ## CS soma self connection
     conn_CSsoma_CSsoma = Synapses(cs_neurons, cs_neurons, model='w: 1', on_pre='g_es+=w*nS', name='CSsoma_CSsoma')  # excitatory
-    conn_CSsoma_CSsoma.connect(p=p.wCS_CS if use_synaptic_probabilities else 1)
+    conn_CSsoma_CSsoma.connect(p=p.pCS_CS if use_synaptic_probabilities else 1)
     conn_CSsoma_CSsoma.w = p.wCS_CS
 
     backprop_CS = Synapses(cs_neurons, cs_neurons, on_pre={'up': 'K += 1', 'down': 'K -=1'},
@@ -200,7 +200,7 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
 
     ## CC soma self connection
     conn_CCsoma_CCsoma = Synapses(cc_neurons, cc_neurons, model='w: 1', on_pre='g_es+=w*nS', name='CCsoma_CCsoma')  # excitatory
-    conn_CCsoma_CCsoma.connect(p=p.wCC_CC if use_synaptic_probabilities else 1)
+    conn_CCsoma_CCsoma.connect(p=p.pCC_CC if use_synaptic_probabilities else 1)
     conn_CCsoma_CCsoma.w = p.wCC_CC
 
     backprop_CC = Synapses(cc_neurons, cc_neurons, on_pre={'up': 'K += 1', 'down': 'K -=1'},
@@ -209,23 +209,23 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
 
     ## SST self connection
     conn_SST_SST = Synapses(sst_neurons, sst_neurons, model='w: 1', on_pre='g_i+=w*nS', name='SST_SST')  # inhibitory
-    conn_SST_SST.connect(p=p.wSST_SST if use_synaptic_probabilities else 1)
+    conn_SST_SST.connect(p=p.pSST_SST if use_synaptic_probabilities else 1)
     conn_SST_SST.w = p.wSST_SST
 
     ## PV self connection
     conn_PV_PV = Synapses(pv_neurons, pv_neurons, model='w: 1', on_pre='g_i+=w*nS', name='PV_PV')  # inhibitory
-    conn_PV_PV.connect(p=p.wPV_PV if use_synaptic_probabilities else 1)
+    conn_PV_PV.connect(p=p.pPV_PV if use_synaptic_probabilities else 1)
     conn_PV_PV.w = p.wPV_PV
 
     # SST => PYR dendrite
     ## target CS dendrite
     conn_SST_CSdendrite = Synapses(sst_neurons, cs_neurons, model='w: 1', on_pre='g_id+=w*nS', name='SST_CSdendrite')  # inhibitory
-    conn_SST_CSdendrite.connect(p=p.wSST_CS if use_synaptic_probabilities else 1)  # not sure about this here
+    conn_SST_CSdendrite.connect(p=p.pSST_CS if use_synaptic_probabilities else 1)  # not sure about this here
     conn_SST_CSdendrite.w = p.wSST_CS
 
     ## target CC dendrite
     conn_SST_CCdendrite = Synapses(sst_neurons, cc_neurons, model='w: 1', on_pre='g_id+=w*nS', name='SST_CCdendrite')  # inhibitory
-    conn_SST_CCdendrite.connect(p=p.wSST_CC if use_synaptic_probabilities else 1)  # not sure about this here
+    conn_SST_CCdendrite.connect(p=p.pSST_CC if use_synaptic_probabilities else 1)  # not sure about this here
     conn_SST_CCdendrite.w = p.wSST_CC
 
     # ##############################################################################
