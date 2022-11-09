@@ -160,7 +160,7 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
     conn_SST_CSsoma = Synapses(sst_neurons, cs_neurons, model='w: 1', on_pre='g_is+=w*nS', name='SST_CSsoma')  # inhibitory (optional connection)
     pSST_CS = 0
     if sst_target_soma:
-        pSST_CS = p.pSST_CS if use_synaptic_probabilities else 1
+        pSST_CS = p.pSST_CS / 2 if use_synaptic_probabilities else 1  # prob divided between soma & dendrite
 
     conn_SST_CSsoma.connect(p=pSST_CS) # inhibitory (optional connection)
     conn_SST_CSsoma.w = p.wSST_CS
@@ -173,7 +173,7 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
     conn_SST_CCsoma = Synapses(sst_neurons, cc_neurons, model='w: 1', on_pre='g_is+=w*nS', name='SST_CCsoma')  # inhibitory (optional connection)
     pSST_CC = 0
     if sst_target_soma:
-        pSST_CC = p.pSST_CC if use_synaptic_probabilities else 1
+        pSST_CC = p.pSST_CC / 2 if use_synaptic_probabilities else 1  # prob divided between soma & dendrite
 
     conn_SST_CCsoma.connect(p=pSST_CC)  # inhibitory (optional connection)
     conn_SST_CCsoma.w = p.wSST_CC
@@ -220,12 +220,14 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
     # SST => PYR dendrite
     ## target CS dendrite
     conn_SST_CSdendrite = Synapses(sst_neurons, cs_neurons, model='w: 1', on_pre='g_id+=w*nS', name='SST_CSdendrite')  # inhibitory
-    conn_SST_CSdendrite.connect(p=p.pSST_CS if use_synaptic_probabilities else 1)  # not sure about this here
+    pSST_CSdendrite = p.pSST_CS / 2 if sst_target_soma else p.pSST_CS  # prob divided between soma & dendrite if sst_target_soma=True
+    conn_SST_CSdendrite.connect(p=pSST_CSdendrite if use_synaptic_probabilities else 1)
     conn_SST_CSdendrite.w = p.wSST_CS
 
     ## target CC dendrite
     conn_SST_CCdendrite = Synapses(sst_neurons, cc_neurons, model='w: 1', on_pre='g_id+=w*nS', name='SST_CCdendrite')  # inhibitory
-    conn_SST_CCdendrite.connect(p=p.pSST_CC if use_synaptic_probabilities else 1)  # not sure about this here
+    pSST_CCdendrite = p.pSST_CC / 2 if sst_target_soma else p.pSST_CC # prob divided between soma & dendrite if sst_target_soma=True
+    conn_SST_CCdendrite.connect(p=pSST_CCdendrite if use_synaptic_probabilities else 1)
     conn_SST_CCdendrite.w = p.wSST_CC
 
     # ##############################################################################
