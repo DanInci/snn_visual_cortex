@@ -2,6 +2,7 @@ from brian2 import *
 from plotting import *
 from equations import *
 from parameters import default as default_params
+import copy
 
 import helpers as hlp
 
@@ -367,11 +368,52 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
     return results
 
 
-params = default_params
+I_external_1 = 50
+I_external_2 = 60
+input_selectivity = hlp.compute_selectivity(I_external_1, I_external_2)
 
-results_with_sst_to_soma = run_simulation(params, seed_val=12345, sst_target_soma=True, use_synaptic_probabilities=True, output_folder='output/with_sst_soma')
-hlp.save_results_to_folder(results_with_sst_to_soma, output_folder='output/with_sst_soma', file_name='results_with_sst_soma.json')
+params_1 = copy.copy(default_params)
+params_1["I_ext_sst"] = [I_external_1 for i in range(0, params_1["N_sst"])]
+params_1["I_ext_pv"] = [I_external_1 for i in range(0, params_1["N_pv"])]
+params_1["I_ext_cc"] = [I_external_1 for i in range(0, params_1["N_cc"])]
+params_1["I_ext_cs"] = [I_external_1 for i in range(0, params_1["N_cs"])]
 
-results_without_sst_to_soma = run_simulation(params, seed_val=12345, sst_target_soma=False, use_synaptic_probabilities=True, output_folder='output/without_sst_soma')
-hlp.save_results_to_folder(results_without_sst_to_soma, output_folder='output/without_sst_soma', file_name='results_without_sst_soma.json')
+params_2 = copy.copy(default_params)
+params_2["I_ext_sst"] = [I_external_2 for i in range(0, params_2["N_sst"])]
+params_2["I_ext_pv"] = [I_external_2 for i in range(0, params_2["N_pv"])]
+params_2["I_ext_cc"] = [I_external_2 for i in range(0, params_2["N_cc"])]
+params_2["I_ext_cs"] = [I_external_2 for i in range(0, params_2["N_cs"])]
+
+
+# SST -> SOMA connection present
+results_with_sst_to_soma_1 = run_simulation(params_1, seed_val=12345, sst_target_soma=True, use_synaptic_probabilities=True, output_folder='output/with_sst_soma/1')
+results_with_sst_to_soma_2 = run_simulation(params_2, seed_val=12345, sst_target_soma=True, use_synaptic_probabilities=True, output_folder='output/with_sst_soma/2')
+
+hlp.save_results_to_folder(results_with_sst_to_soma_1, output_folder='output/with_sst_soma', file_name='results_with_sst_soma_1.json')
+hlp.save_results_to_folder(results_with_sst_to_soma_2, output_folder='output/with_sst_soma', file_name='results_with_sst_soma_2.json')
+
+agg_results_with_sst_to_soma = {}
+agg_results_with_sst_to_soma["input_selectivity"] = input_selectivity
+agg_results_with_sst_to_soma["output_selectivity_cs"] = hlp.compute_selectivity(np.mean(results_with_sst_to_soma_1["firing_rates_cs"]), np.mean(results_with_sst_to_soma_2["firing_rates_cs"]))
+agg_results_with_sst_to_soma["output_selectivity_cc"] = hlp.compute_selectivity(np.mean(results_with_sst_to_soma_1["firing_rates_cc"]), np.mean(results_with_sst_to_soma_2["firing_rates_cc"]))
+agg_results_with_sst_to_soma["output_selectivity_sst"] = hlp.compute_selectivity(np.mean(results_with_sst_to_soma_1["firing_rates_sst"]), np.mean(results_with_sst_to_soma_2["firing_rates_sst"]))
+agg_results_with_sst_to_soma["output_selectivity_pv"] = hlp.compute_selectivity(np.mean(results_with_sst_to_soma_1["firing_rates_pv"]), np.mean(results_with_sst_to_soma_2["firing_rates_pv"]))
+hlp.save_agg_results_to_folder(agg_results_with_sst_to_soma, output_folder='output/with_sst_soma', file_name='agg_results_with_sst_soma.json')
+
+
+# SST -> SOMA connection NOT present
+results_without_sst_to_soma_1 = run_simulation(params_1, seed_val=12345, sst_target_soma=False, use_synaptic_probabilities=True, output_folder='output/without_sst_soma/1')
+results_without_sst_to_soma_2 = run_simulation(params_2, seed_val=12345, sst_target_soma=False, use_synaptic_probabilities=True, output_folder='output/without_sst_soma/2')
+
+hlp.save_results_to_folder(results_without_sst_to_soma_1, output_folder='output/without_sst_soma', file_name='results_without_sst_soma_1.json')
+hlp.save_results_to_folder(results_without_sst_to_soma_2, output_folder='output/without_sst_soma', file_name='results_without_sst_soma_2.json')
+
+agg_results_without_sst_to_soma = {}
+agg_results_without_sst_to_soma["input_selectivity"] = input_selectivity
+agg_results_without_sst_to_soma["output_selectivity_cs"] = hlp.compute_selectivity(np.mean(results_without_sst_to_soma_1["firing_rates_cs"]), np.mean(results_without_sst_to_soma_2["firing_rates_cs"]))
+agg_results_without_sst_to_soma["output_selectivity_cc"] = hlp.compute_selectivity(np.mean(results_without_sst_to_soma_1["firing_rates_cc"]), np.mean(results_without_sst_to_soma_2["firing_rates_cc"]))
+agg_results_without_sst_to_soma["output_selectivity_sst"] = hlp.compute_selectivity(np.mean(results_without_sst_to_soma_1["firing_rates_sst"]), np.mean(results_without_sst_to_soma_2["firing_rates_sst"]))
+agg_results_without_sst_to_soma["output_selectivity_pv"] = hlp.compute_selectivity(np.mean(results_without_sst_to_soma_1["firing_rates_pv"]), np.mean(results_without_sst_to_soma_2["firing_rates_pv"]))
+hlp.save_agg_results_to_folder(agg_results_without_sst_to_soma, output_folder='output/without_sst_soma', file_name='agg_results_without_sst_soma.json')
+
 
