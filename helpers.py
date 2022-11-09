@@ -206,14 +206,25 @@ def save_results_to_folder(results, output_folder=None, file_name='results.json'
         dump['avg_firing_rate_sst'] = '%.3f' % np.mean(results["firing_rates_sst"])
         dump['avg_firing_rate_pv'] = '%.3f' % np.mean(results["firing_rates_pv"])
 
-        dump['input_selectivity'] = '%.3f' % results["input_selectivity"]
-        dump['output_selectivity_cs'] = '%.3f' % results["output_selectivity_cs"]
-        dump['output_selectivity_cc'] = '%.3f' % results["output_selectivity_cc"]
+        if results.get("input_selectivity"):
+            dump['input_selectivity'] = '%.3f' % results["input_selectivity"]
 
-        dump["burst_lengths_cs"] = results.get("burst_lengths_cs")
-        dump["burst_lengths_cc"] = results.get("burst_lengths_cc")
-        dump["burst_lengths_sst"] = results.get("burst_lengths_sst")
-        dump["burst_lengths_pv"] = results.get("burst_lengths_pv")
+        if results.get("output_selectivity_cs"):
+            dump['output_selectivity_cs'] = '%.3f' % results["output_selectivity_cs"]
+
+        if results.get("output_selectivity_cc"):
+            dump['output_selectivity_cc'] = '%.3f' % results["output_selectivity_cc"]
+
+        if results.get("output_selectivity_sst"):
+            dump['output_selectivity_sst'] = '%.3f' % results["output_selectivity_sst"]
+
+        if results.get("output_selectivity_pv"):
+            dump['output_selectivity_pv'] = '%.3f' % results["output_selectivity_pv"]
+
+        # dump["burst_lengths_cs"] = results.get("burst_lengths_cs")
+        # dump["burst_lengths_cc"] = results.get("burst_lengths_cc")
+        # dump["burst_lengths_sst"] = results.get("burst_lengths_sst")
+        # dump["burst_lengths_pv"] = results.get("burst_lengths_pv")
 
         json_file = open(f'{output_folder}/{file_name}', 'w')
         json_file.write(json.dumps(dump, indent=4))

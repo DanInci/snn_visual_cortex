@@ -300,12 +300,6 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
     results["firing_rates_sst"] = hlp.compute_firing_rate_for_neuron_type(spike_mon_sst, from_t, to_t)
     results["firing_rates_pv"] = hlp.compute_firing_rate_for_neuron_type(spike_mon_pv, from_t, to_t)
 
-    # Compute input & output selectivity for CC & CS neuron groups
-
-    results["input_selectivity"] = hlp.compute_input_selectivity(I_ext_cs)
-    results["output_selectivity_cs"] = hlp.compute_output_selectivity_for_neuron_type(spike_mon_cs, from_t, to_t)
-    results["output_selectivity_cc"] = hlp.compute_output_selectivity_for_neuron_type(spike_mon_cc, from_t, to_t)
-
     # Compute inter-spike intervals for each neuron group
 
     results["interspike_intervals_cs"] = np.concatenate(hlp.compute_interspike_intervals(spike_mon_cs, from_t, to_t), axis=0)
@@ -370,7 +364,8 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
 params = default_params
 
 results_with_sst_to_soma = run_simulation(params, seed_val=12345, sst_target_soma=True, use_synaptic_probabilities=True, output_folder='output/with_sst_soma')
-hlp.save_results_to_folder(results_with_sst_to_soma, output_folder='output/with_sst_soma')
+hlp.save_results_to_folder(results_with_sst_to_soma, output_folder='output/with_sst_soma', file_name='results_with_sst_soma.json')
 
 results_without_sst_to_soma = run_simulation(params, seed_val=12345, sst_target_soma=False, use_synaptic_probabilities=True, output_folder='output/without_sst_soma')
-hlp.save_results_to_folder(results_without_sst_to_soma, output_folder='output/without_sst_soma')
+hlp.save_results_to_folder(results_without_sst_to_soma, output_folder='output/without_sst_soma', file_name='results_without_sst_soma.json')
+

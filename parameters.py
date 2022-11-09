@@ -1,19 +1,19 @@
 from brian2 import *
 
-
-def flatten(l):
-    return [item for sublist in l for item in sublist]
-
+N_SST = 10
+N_PV = 10
+N_CC = 40
+N_CS = 40
 
 default = {
     ### General parameters
     "duration": 3 * second,  # Total simulation time
     "sim_dt":   0.1 * ms,  # Integrator/sampling step
 
-    "N_sst": 10,  # Number of SST neurons (inhibitory)
-    "N_pv":  10,  # Number of PV neurons (inhibitory)
-    "N_cc":  40,  # Number of CC neurons (excitatory)
-    "N_cs":  40,  # Number of CS neurons (excitatory)
+    "N_sst": N_SST,  # Number of SST neurons (inhibitory)
+    "N_pv":  N_PV,  # Number of PV neurons (inhibitory)
+    "N_cc":  N_CC,  # Number of CC neurons (excitatory)
+    "N_cs":  N_CS,  # Number of CS neurons (excitatory)
 
     ### Neuron parameters
     "tau_S":    16 * ms,
@@ -90,13 +90,13 @@ default = {
     "pPV_SST":   0.14,
 
     ### External Input
-    "I_ext_sst":    flatten([[50, 50*1.05] for i in range(0, 100, 2)]),
-    "I_ext_pv":     flatten([[50, 50*1.05] for i in range(0, 100, 2)]),
-    "I_ext_cc":     flatten([[50, 50*1.05] for i in range(0, 400, 2)]),
-    "I_ext_cs":     flatten([[50, 50*1.05] for i in range(0, 400, 2)]),
+    "I_ext_sst":    [50 for i in range(0, N_SST)],
+    "I_ext_pv":     [50 for i in range(0, N_PV)],
+    "I_ext_cc":     [50 for i in range(0, N_CC)],
+    "I_ext_cs":     [50 for i in range(0, N_CS)],
 
     "lambda_cc":  10*Hz,
     "lambda_cs":  10*Hz,
-    "lambda_sst":  10*Hz,
+    "lambda_sst": 10*Hz,
     "lambda_pv":  10*Hz
 }
