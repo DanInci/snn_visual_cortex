@@ -1,9 +1,9 @@
 from brian2 import *
 
-N_SST = 10
-N_PV = 10
-N_CC = 40
-N_CS = 40
+N_SST = 100
+N_PV = 100
+N_CC = 400
+N_CS = 400
 
 default = {
     ### General parameters

@@ -22,7 +22,8 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
     ################################################################################
     ### General parameters
     time_frame = 0.1  # Time frame for computing equlibrium time
-    no_bins = 10  # Number of bins for interspike intervals historgram
+    no_bins_firing_rates = 10 # Number of bins for firing rates historgram
+    no_bins_isi = 10  # Number of bins for interspike intervals historgram
 
     plot_only_from_equilibrium = True  # Plot graphs only from equilibrium time
     recompute_equilibrium = False  # If true, will try and recompute equilibirum time, if not will use `default_equilibrium_time`
@@ -300,6 +301,9 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
     results["firing_rates_sst"] = hlp.compute_firing_rate_for_neuron_type(spike_mon_sst, from_t, to_t)
     results["firing_rates_pv"] = hlp.compute_firing_rate_for_neuron_type(spike_mon_pv, from_t, to_t)
 
+    firing_rates = [results["firing_rates_cs"], results["firing_rates_cc"], results["firing_rates_sst"], results["firing_rates_pv"]]
+    plot_firing_rate_histograms(firing_rates, no_bins_firing_rates, output_folder=output_folder, file_name='firing_rate_histograms')
+
     # Compute inter-spike intervals for each neuron group
 
     results["interspike_intervals_cs"] = np.concatenate(hlp.compute_interspike_intervals(spike_mon_cs, from_t, to_t), axis=0)
@@ -309,29 +313,29 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
 
     # Compute auto-correlation for isi for each neuron group
     # for CS
-    autocorr_cs = hlp.compute_autocorr_struct(results["interspike_intervals_cs"], no_bins)
+    autocorr_cs = hlp.compute_autocorr_struct(results["interspike_intervals_cs"], no_bins_isi)
     if autocorr_cs:
         results["acorr_min_cs"] = autocorr_cs["minimum"]
 
     # for CC
-    autocorr_cc = hlp.compute_autocorr_struct(results["interspike_intervals_cc"], no_bins)
+    autocorr_cc = hlp.compute_autocorr_struct(results["interspike_intervals_cc"], no_bins_isi)
     if autocorr_cc:
         results["acorr_min_cc"] = autocorr_cc["minimum"]
 
 
     # for SST
-    autocorr_sst = hlp.compute_autocorr_struct(results["interspike_intervals_sst"], no_bins)
+    autocorr_sst = hlp.compute_autocorr_struct(results["interspike_intervals_sst"], no_bins_isi)
     if autocorr_sst:
         results["acorr_min_sst"] = autocorr_sst["minimum"]
 
     # for PV
-    autocorr_pv = hlp.compute_autocorr_struct(results["interspike_intervals_pv"], no_bins)
+    autocorr_pv = hlp.compute_autocorr_struct(results["interspike_intervals_pv"], no_bins_isi)
     if autocorr_pv:
         results["acorr_min_sst"] = autocorr_pv["minimum"]
 
     interspike_intervals = [results["interspike_intervals_cs"], results["interspike_intervals_cc"], results["interspike_intervals_sst"], results["interspike_intervals_pv"]]
     autocorr = [autocorr_cs, autocorr_cc, autocorr_sst, autocorr_pv]
-    plot_isi_histograms(interspike_intervals, no_bins, autocorr=autocorr, output_folder=output_folder, file_name='isi_histograms')
+    plot_isi_histograms(interspike_intervals, no_bins_isi, autocorr=autocorr, output_folder=output_folder, file_name='isi_histograms')
 
     # Detect bursts
     # for CS

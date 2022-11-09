@@ -89,6 +89,31 @@ def plot_states(state_mon, spike_mon, spike_thld,
         fig.savefig('%s/%s.pdf' % (output_folder, file_name), bbox_inches='tight')
 
 
+def plot_firing_rate_histograms(firing_rates, no_bins, output_folder=None, file_name='firing_rate_histograms'):
+    columns = 2
+    rows = int(len(firing_rates) / columns)
+
+    fig, axs = plt.subplots(rows, columns, figsize=(6 * columns, 6 * rows))
+
+    for (ntype_index, firing_rate_i) in enumerate(firing_rates):
+        row_idx = int(ntype_index / columns)
+        col_idx = ntype_index % columns
+
+        # plot histogram of neuron group
+        axs[row_idx][col_idx].hist(firing_rate_i, bins=no_bins)
+        axs[row_idx][col_idx].axis(ymin=0)
+        axs[row_idx][col_idx].set_title(f'Neuron group {index_to_ntype_dict[ntype_index]}', fontsize=10)
+        axs[row_idx][col_idx].set_xlabel("Firing rate [Hz]", fontsize=10)
+        axs[row_idx][col_idx].set_ylabel("Frequency", fontsize=10)
+        axs[row_idx][col_idx].tick_params(axis='both', which='major', labelsize=10)
+
+    if output_folder is not None:
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+
+        fig.savefig('%s/%s.pdf' % (output_folder, file_name), bbox_inches='tight')
+
+
 def plot_isi_histograms(interspike_intervals, no_bins, autocorr=None, output_folder=None, file_name='isi_histograms'):
     columns = 2
     rows = len(interspike_intervals)
