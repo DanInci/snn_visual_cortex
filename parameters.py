@@ -1,9 +1,9 @@
 from brian2 import *
 
-N_SST = 100
-N_PV = 100
-N_CC = 400
-N_CS = 400
+N_SST = 10
+N_PV = 10
+N_CC = 40
+N_CS = 40
 
 default = {
     ### General parameters
@@ -89,14 +89,22 @@ default = {
     "wPV_SST":   0.44,
     "pPV_SST":   0.14,
 
-    ### External Input
-    "I_ext_sst":    [50 for i in range(0, N_SST)],
-    "I_ext_pv":     [50 for i in range(0, N_PV)],
-    "I_ext_cc":     [50 for i in range(0, N_CC)],
-    "I_ext_cs":     [50 for i in range(0, N_CS)],
+    ### Input amplitude & steady state
+    "I_sst_amp":    50,
+    "I_pv_amp":     50,
+    "I_cc_amp":     50,
+    "I_cs_amp":     50,
+
+    "I_sst_steady":  0,
+    "I_pv_steady":   0,
+    "I_cc_steady":   0,
+    "I_cs_steady":   0,
 
     "lambda_cc":  10*Hz,
     "lambda_cs":  10*Hz,
     "lambda_sst": 10*Hz,
-    "lambda_pv":  10*Hz
+    "lambda_pv":  10*Hz,
+
+    ### Degrees for simulated orientation input
+    "degrees": [0, 90, 180, 270]
 }
