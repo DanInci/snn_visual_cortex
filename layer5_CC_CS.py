@@ -368,7 +368,9 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
     return results
 
 
-def simulate_with_different_inputs(params, seed_val=12345):
+def simulate_with_different_inputs(params, simulate_with_sst_soma=True, simulate_without_sst_soma=True, seed_val=12345):
+    assert simulate_with_sst_soma or simulate_without_sst_soma
+
     p = Struct(**params)
 
     N = [p.N_cs, p.N_cc, p.N_sst, p.N_pv]
@@ -406,35 +408,39 @@ def simulate_with_different_inputs(params, seed_val=12345):
         params_with_input["I_ext_pv"] = inputs[:, p.N_cs+p.N_cc+p.N_sst:]
 
         # SST -> SOMA connection present
-        result_with_sst_soma = run_simulation(params_with_input, seed_val=seed_val, sst_target_soma=True,
-                                                    use_synaptic_probabilities=True,
-                                                    output_folder=f'output/with_sst_soma/{degree}')
-        results_with_sst_soma.append(result_with_sst_soma)
+        if simulate_with_sst_soma:
+            result_with_sst_soma = run_simulation(params_with_input, seed_val=seed_val, sst_target_soma=True,
+                                                        use_synaptic_probabilities=True,
+                                                        output_folder=f'output/with_sst_soma/{degree}')
+            results_with_sst_soma.append(result_with_sst_soma)
 
-        hlp.save_results_to_folder(result_with_sst_soma, output_folder=f'output/with_sst_soma/{degree}',
-                                   file_name='results.json')
+            hlp.save_results_to_folder(result_with_sst_soma, output_folder=f'output/with_sst_soma/{degree}',
+                                       file_name='results.json')
 
         # SST -> SOMA connection NOT present
-        result_without_sst_to_soma = run_simulation(params_with_input, seed_val=seed_val, sst_target_soma=False,
-                                                       use_synaptic_probabilities=True,
-                                                       output_folder=f'output/without_sst_soma/{degree}')
-        results_without_sst_soma.append(result_without_sst_to_soma)
+        if simulate_without_sst_soma:
+            result_without_sst_to_soma = run_simulation(params_with_input, seed_val=seed_val, sst_target_soma=False,
+                                                           use_synaptic_probabilities=True,
+                                                           output_folder=f'output/without_sst_soma/{degree}')
+            results_without_sst_soma.append(result_without_sst_to_soma)
 
-        hlp.save_results_to_folder(result_without_sst_to_soma, output_folder=f'output/without_sst_soma/{degree}',
-                                   file_name='results.json')
+            hlp.save_results_to_folder(result_without_sst_to_soma, output_folder=f'output/without_sst_soma/{degree}',
+                                       file_name='results.json')
 
     ################## calculate aggregate statistics for previous simulations ##################
     # SST -> SOMA connection present
-    agg_results_with_sst_to_soma = hlp.calculate_aggregate_results(results_with_sst_soma)
-    hlp.save_agg_results_to_folder(agg_results_with_sst_to_soma,
-                                   output_folder='output/with_sst_soma',
-                                   file_name='agg_results.json')
+    if simulate_with_sst_soma:
+        agg_results_with_sst_to_soma = hlp.calculate_aggregate_results(results_with_sst_soma)
+        hlp.save_agg_results_to_folder(agg_results_with_sst_to_soma,
+                                       output_folder='output/with_sst_soma',
+                                       file_name='agg_results.json')
 
     # SST -> SOMA connection NOT present
-    agg_results_without_sst_to_soma = hlp.calculate_aggregate_results(results_without_sst_soma)
-    hlp.save_agg_results_to_folder(agg_results_without_sst_to_soma,
-                                   output_folder='output/without_sst_soma',
-                                   file_name='agg_results.json')
+    if simulate_without_sst_soma:
+        agg_results_without_sst_to_soma = hlp.calculate_aggregate_results(results_without_sst_soma)
+        hlp.save_agg_results_to_folder(agg_results_without_sst_to_soma,
+                                       output_folder='output/without_sst_soma',
+                                       file_name='agg_results.json')
 
 
-simulate_with_different_inputs(default_params, seed_val=12345)
+simulate_with_different_inputs(default_params, simulate_with_sst_soma=True, simulate_without_sst_soma=True, seed_val=12345)

@@ -197,10 +197,10 @@ def save_results_to_folder(results, output_folder=None, file_name='results.json'
             os.makedirs(output_folder)
 
         dump = {}
-        dump['avg_firing_rate_cs'] = '%.3f' % np.mean(results["firing_rates_cs"])
-        dump['avg_firing_rate_cc'] = '%.3f' % np.mean(results["firing_rates_cc"])
-        dump['avg_firing_rate_sst'] = '%.3f' % np.mean(results["firing_rates_sst"])
-        dump['avg_firing_rate_pv'] = '%.3f' % np.mean(results["firing_rates_pv"])
+        dump['avg_firing_rate_cs'] = np.mean(results["firing_rates_cs"])
+        dump['avg_firing_rate_cc'] = np.mean(results["firing_rates_cc"])
+        dump['avg_firing_rate_sst'] = np.mean(results["firing_rates_sst"])
+        dump['avg_firing_rate_pv'] = np.mean(results["firing_rates_pv"])
 
         # dump["burst_lengths_cs"] = results.get("burst_lengths_cs")
         # dump["burst_lengths_cc"] = results.get("burst_lengths_cc")
