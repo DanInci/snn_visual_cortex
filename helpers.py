@@ -52,18 +52,8 @@ def compute_firing_rate_for_neuron_type(spike_mon, from_t, to_t):
     return spikes_for_i / duration
 
 
-def compute_input_selectivity(inputs):
-    assert len(inputs) >= 2
-
-    return np.abs(inputs[0] - inputs[1]) / (inputs[0] + inputs[1])
-
-
-@check_units(sim_duration=ms, result=1)
-def compute_output_selectivity_for_neuron_type(spike_mon, from_t, to_t):
-    rates_for_i = compute_firing_rate_for_neuron_type(spike_mon, from_t, to_t)
-    assert len(rates_for_i) >= 2
-
-    return np.abs(rates_for_i[0] - rates_for_i[1]) / (rates_for_i[0] + rates_for_i[1])
+def compute_selectivity(input_1, input_2):
+    return np.abs(input_1 - input_2) / (input_1 + input_2)
 
 
 def compute_interspike_intervals(spike_mon, from_t, to_t):
@@ -195,6 +185,23 @@ def compute_burst_lengths_by_neuron_group(burst_trains):
     return burst_lengths
 
 
+def save_agg_results_to_folder(results, output_folder=None, file_name='results.json'):
+    if output_folder is not None:
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+
+        dump = {}
+        dump['input_selectivity'] = '%.3f' % results["input_selectivity"]
+        dump['output_selectivity_cs'] = '%.3f' % results["output_selectivity_cs"]
+        dump['output_selectivity_cc'] = '%.3f' % results["output_selectivity_cc"]
+        dump['output_selectivity_sst'] = '%.3f' % results["output_selectivity_sst"]
+        dump['output_selectivity_pv'] = '%.3f' % results["output_selectivity_pv"]
+
+        json_file = open(f'{output_folder}/{file_name}', 'w')
+        json_file.write(json.dumps(dump, indent=4))
+        json_file.close()
+
+
 def save_results_to_folder(results, output_folder=None, file_name='results.json'):
     if output_folder is not None:
         if not os.path.exists(output_folder):
@@ -206,14 +213,10 @@ def save_results_to_folder(results, output_folder=None, file_name='results.json'
         dump['avg_firing_rate_sst'] = '%.3f' % np.mean(results["firing_rates_sst"])
         dump['avg_firing_rate_pv'] = '%.3f' % np.mean(results["firing_rates_pv"])
 
-        dump['input_selectivity'] = '%.3f' % results["input_selectivity"]
-        dump['output_selectivity_cs'] = '%.3f' % results["output_selectivity_cs"]
-        dump['output_selectivity_cc'] = '%.3f' % results["output_selectivity_cc"]
-
-        dump["burst_lengths_cs"] = results.get("burst_lengths_cs")
-        dump["burst_lengths_cc"] = results.get("burst_lengths_cc")
-        dump["burst_lengths_sst"] = results.get("burst_lengths_sst")
-        dump["burst_lengths_pv"] = results.get("burst_lengths_pv")
+        # dump["burst_lengths_cs"] = results.get("burst_lengths_cs")
+        # dump["burst_lengths_cc"] = results.get("burst_lengths_cc")
+        # dump["burst_lengths_sst"] = results.get("burst_lengths_sst")
+        # dump["burst_lengths_pv"] = results.get("burst_lengths_pv")
 
         json_file = open(f'{output_folder}/{file_name}', 'w')
         json_file.write(json.dumps(dump, indent=4))

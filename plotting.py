@@ -16,28 +16,24 @@ index_to_ntype_dict = {
 }
 
 
-def plot_raster(spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv,
-                plot_only_from_equilibrium=False, from_t=None, to_t=None,
+def plot_raster(spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv, from_t=None, to_t=None,
                 output_folder=None, file_name='spike_raster_plot'):
     """ Plots the spikes """
 
     fig = plt.figure()
     ax1 = fig.add_subplot(1, 1, 1)
 
-    ax1.plot(spike_mon_cs.t / ms, spike_mon_cs.i, '|b', label='CS', markeredgewidth=0.5)
-    ax1.plot(spike_mon_cc.t / ms, len(spike_mon_cs.count) + spike_mon_cc.i, '|r', label='CC', markeredgewidth=0.5)
-    ax1.plot(spike_mon_sst.t / ms, (len(spike_mon_cs.count) + len(spike_mon_cc.count)) + spike_mon_sst.i, '|g',
-             label='SST', markeredgewidth=0.5)
-    ax1.plot(spike_mon_pv.t / ms,
-             (len(spike_mon_cs.count) + len(spike_mon_cc.count) + len(spike_mon_sst.count)) + spike_mon_pv.i, '|y',
-             label='PV', markeredgewidth=0.5)
+    ax1.scatter(spike_mon_cs.t / ms, spike_mon_cs.i, s=0.2, color='b', label='CS')
+    ax1.scatter(spike_mon_cc.t / ms, len(spike_mon_cs.count) + spike_mon_cc.i, s=0.2, color='r', label='CC')
+    ax1.scatter(spike_mon_sst.t / ms, (len(spike_mon_cs.count) + len(spike_mon_cc.count)) + spike_mon_sst.i, s=0.2, color='g', label='SST')
+    ax1.scatter(spike_mon_pv.t / ms, (len(spike_mon_cs.count) + len(spike_mon_cc.count) + len(spike_mon_sst.count)) + spike_mon_pv.i, s=0.2, color='y', label='PV')
+
     ax1.set_xlabel('Time (ms)')
     ax1.set_ylabel('Neuron index')
     ax1.legend(loc='best')
     ax1.set_title('Spike Raster Plot')
 
-    if plot_only_from_equilibrium:
-        ax1.set_xlim(left=from_t / ms, right=to_t / ms)
+    ax1.set_xlim(left=from_t / ms, right=to_t / ms)
 
     if output_folder is not None:
         if not os.path.exists(output_folder):
@@ -81,6 +77,31 @@ def plot_states(state_mon, spike_mon, spike_thld,
 
     if plot_only_from_equilibrium:
         axs[1].set_xlim(left=from_t / ms, right=to_t / ms)
+
+    if output_folder is not None:
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+
+        fig.savefig('%s/%s.pdf' % (output_folder, file_name), bbox_inches='tight')
+
+
+def plot_firing_rate_histograms(firing_rates, no_bins, output_folder=None, file_name='firing_rate_histograms'):
+    columns = 2
+    rows = int(len(firing_rates) / columns)
+
+    fig, axs = plt.subplots(rows, columns, figsize=(6 * columns, 6 * rows))
+
+    for (ntype_index, firing_rate_i) in enumerate(firing_rates):
+        row_idx = int(ntype_index / columns)
+        col_idx = ntype_index % columns
+
+        # plot histogram of neuron group
+        axs[row_idx][col_idx].hist(firing_rate_i, bins=no_bins)
+        axs[row_idx][col_idx].axis(ymin=0)
+        axs[row_idx][col_idx].set_title(f'Neuron group {index_to_ntype_dict[ntype_index]}', fontsize=10)
+        axs[row_idx][col_idx].set_xlabel("Firing rate [Hz]", fontsize=10)
+        axs[row_idx][col_idx].set_ylabel("Frequency", fontsize=10)
+        axs[row_idx][col_idx].tick_params(axis='both', which='major', labelsize=10)
 
     if output_folder is not None:
         if not os.path.exists(output_folder):

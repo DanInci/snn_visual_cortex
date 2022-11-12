@@ -1,19 +1,19 @@
 from brian2 import *
 
-
-def flatten(l):
-    return [item for sublist in l for item in sublist]
-
+N_SST = 100
+N_PV = 100
+N_CC = 400
+N_CS = 400
 
 default = {
     ### General parameters
-    "duration": 3 * second,  # Total simulation time
+    "duration": 10 * second,  # Total simulation time
     "sim_dt":   0.1 * ms,  # Integrator/sampling step
 
-    "N_sst": 10,  # Number of SST neurons (inhibitory)
-    "N_pv":  10,  # Number of PV neurons (inhibitory)
-    "N_cc":  40,  # Number of CC neurons (excitatory)
-    "N_cs":  40,  # Number of CS neurons (excitatory)
+    "N_sst": N_SST,  # Number of SST neurons (inhibitory)
+    "N_pv":  N_PV,  # Number of PV neurons (inhibitory)
+    "N_cc":  N_CC,  # Number of CC neurons (excitatory)
+    "N_cs":  N_CS,  # Number of CS neurons (excitatory)
 
     ### Neuron parameters
     "tau_S":    16 * ms,
@@ -43,31 +43,60 @@ default = {
     "E_d":  -38 * mV,  # position control of threshold
     "D_d":    6 * mV,  # sharpness control of threshold
 
-    ### Synpatic connection weights (probabilities are derived)
-    "wCS_CS":    0.16,
-    "wCS_SST":   0.23,
-    "wCS_PV":    0.18,
-    "wSST_CS":   0.52,
-    "wPV_CS":    0.43,
-    "wCC_CC":    0.06,
-    "wCC_SST":   0.26,
-    "wCC_PV":    0.22,
-    "wSST_CC":   0.13,
-    "wPV_CC":    0.38,
-    "wCC_CS":    0.09,
-    "wSST_PV":   0.29,
-    "wSST_SST":  0.1,
-    "wPV_PV":    0.5,
-    "wPV_SST":   0.14,
+    ### Synpatic connection weights & probabilities
+    "wCS_CS":    0.27,
+    "pCS_CS":    0.16,
+
+    "wCS_SST":   0.05,
+    "pCS_SST":   0.23,
+
+    "wCS_PV":    1.01,
+    "pCS_PV":    0.18,
+
+    "wSST_CS":   0.19,
+    "pSST_CS":   0.52,
+
+    "wPV_CS":    0.32,
+    "pPV_CS":    0.43,
+
+    "wCC_CC":    0.24,
+    "pCC_CC":    0.06,
+
+    "wCC_SST":   0.09,
+    "pCC_SST":   0.26,
+
+    "wCC_PV":    0.48,
+    "pCC_PV":    0.22,
+
+    "wSST_CC":   0.19,
+    "pSST_CC":   0.13,
+
+    "wPV_CC":    0.52,
+    "pPV_CC":    0.38,
+
+    "wCC_CS":    0.19,
+    "pCC_CS":    0.09,
+
+    "wSST_PV":   0.18,
+    "pSST_PV":   0.29,
+
+    "wSST_SST":  0.19,
+    "pSST_SST":  0.1,
+
+    "wPV_PV":    0.47,
+    "pPV_PV":    0.5,
+
+    "wPV_SST":   0.44,
+    "pPV_SST":   0.14,
 
     ### External Input
-    "I_ext_sst":    flatten([[50, 50*1.05] for i in range(0, 100, 2)]),
-    "I_ext_pv":     flatten([[50, 50*1.05] for i in range(0, 100, 2)]),
-    "I_ext_cc":     flatten([[50, 50*1.05] for i in range(0, 400, 2)]),
-    "I_ext_cs":     flatten([[50, 50*1.05] for i in range(0, 400, 2)]),
+    "I_ext_sst":    [50 for i in range(0, N_SST)],
+    "I_ext_pv":     [50 for i in range(0, N_PV)],
+    "I_ext_cc":     [50 for i in range(0, N_CC)],
+    "I_ext_cs":     [50 for i in range(0, N_CS)],
 
     "lambda_cc":  10*Hz,
     "lambda_cs":  10*Hz,
-    "lambda_sst":  10*Hz,
+    "lambda_sst": 10*Hz,
     "lambda_pv":  10*Hz
 }

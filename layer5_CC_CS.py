@@ -2,6 +2,7 @@ from brian2 import *
 from plotting import *
 from equations import *
 from parameters import default as default_params
+import copy
 
 import helpers as hlp
 
@@ -22,13 +23,14 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
     ################################################################################
     ### General parameters
     time_frame = 0.1  # Time frame for computing equlibrium time
-    no_bins = 10  # Number of bins for interspike intervals historgram
+    no_bins_firing_rates = 10 # Number of bins for firing rates historgram
+    no_bins_isi = 10  # Number of bins for interspike intervals historgram
 
     plot_only_from_equilibrium = True  # Plot graphs only from equilibrium time
-    recompute_equilibrium = True  # If true, will try and recompute equilibirum time, if not will use `default_equilibrium_time`
-    default_equilibrium_t = 5.6*second  # Default equilibirium time, will be used in case `recompute_equilibrium` is False. Should be set based on previous simulation results
+    recompute_equilibrium = False  # If true, will try and recompute equilibirum time, if not will use `default_equilibrium_time`
+    default_equilibrium_t = 5*second  # Default equilibirium time, will be used in case `recompute_equilibrium` is False. Should be set based on previous simulation results
 
-    duration = p.duration  # Total simulation time
+    sim_duration = p.duration  # Total simulation time
     sim_dt = p.sim_dt  # Integrator/sampling step
 
     N_sst = p.N_sst  # Number of SST neurons (inhibitory)
@@ -129,30 +131,30 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
 
     # SST <=> PV
     conn_SST_PV = Synapses(sst_neurons, pv_neurons, model='w: 1', on_pre='g_i+=w*nS', name='SST_PV')  # inhibitory
-    conn_SST_PV.connect(p=p.wSST_PV if use_synaptic_probabilities else 1)
+    conn_SST_PV.connect(p=p.pSST_PV if use_synaptic_probabilities else 1)
     conn_SST_PV.w = p.wSST_PV
 
     conn_PV_SST = Synapses(pv_neurons, sst_neurons, model='w: 1', on_pre='g_i+=w*nS', name='PV_SST')  # inhibitory
-    conn_PV_SST.connect(p=p.wPV_SST if use_synaptic_probabilities else 1)
+    conn_PV_SST.connect(p=p.pPV_SST if use_synaptic_probabilities else 1)
     conn_PV_SST.w = p.wPV_SST
 
     # PV <=> PYR soma
     ## target CS soma
     conn_PV_CSsoma = Synapses(pv_neurons, cs_neurons, model='w: 1', on_pre='g_is+=w*nS', name='PV_CSsoma')  # inhibitory
-    conn_PV_CSsoma.connect(p=p.wPV_CS if use_synaptic_probabilities else 1)
+    conn_PV_CSsoma.connect(p=p.pPV_CS if use_synaptic_probabilities else 1)
     conn_PV_CSsoma.w = p.wPV_CS
 
     conn_CSsoma_PV = Synapses(cs_neurons, pv_neurons, model='w: 1', on_pre='g_e+=w*nS', name='CSsoma_PV')  # excitatory
-    conn_CSsoma_PV.connect(p=p.wCS_PV if use_synaptic_probabilities else 1)
+    conn_CSsoma_PV.connect(p=p.pCS_PV if use_synaptic_probabilities else 1)
     conn_CSsoma_PV.w = p.wCS_PV
 
     ## target CC soma
     conn_PV_CCsoma = Synapses(pv_neurons, cc_neurons, model='w: 1', on_pre='g_is+=w*nS', name='PV_CCsoma')  # inhibitory
-    conn_PV_CCsoma.connect(p=p.wPV_CC if use_synaptic_probabilities else 1)
+    conn_PV_CCsoma.connect(p=p.pPV_CC if use_synaptic_probabilities else 1)
     conn_PV_CCsoma.w = p.wPV_CC
 
     conn_CCsoma_PV = Synapses(cc_neurons, pv_neurons, model='w: 1', on_pre='g_e+=w*nS', name='CCsoma_PV')  # excitatory
-    conn_CCsoma_PV.connect(p=p.wCC_PV if use_synaptic_probabilities else 1)
+    conn_CCsoma_PV.connect(p=p.pCC_PV if use_synaptic_probabilities else 1)
     conn_CCsoma_PV.w = p.wCC_PV
 
     # SST <=> PYR soma
@@ -160,38 +162,38 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
     conn_SST_CSsoma = Synapses(sst_neurons, cs_neurons, model='w: 1', on_pre='g_is+=w*nS', name='SST_CSsoma')  # inhibitory (optional connection)
     pSST_CS = 0
     if sst_target_soma:
-        pSST_CS = p.wSST_CS if use_synaptic_probabilities else 1
+        pSST_CS = p.pSST_CS / 2 if use_synaptic_probabilities else 1  # prob divided between soma & dendrite
 
     conn_SST_CSsoma.connect(p=pSST_CS) # inhibitory (optional connection)
     conn_SST_CSsoma.w = p.wSST_CS
 
     conn_CSsoma_SST = Synapses(cs_neurons, sst_neurons, model='w: 1', on_pre='g_e+=w*nS', name='CSsoma_SST')  # excitatory
-    conn_CSsoma_SST.connect(p=p.wCS_SST if use_synaptic_probabilities else 1)
+    conn_CSsoma_SST.connect(p=p.pCS_SST if use_synaptic_probabilities else 1)
     conn_CSsoma_SST.w = p.wCS_SST
 
     ## taget CC soma
     conn_SST_CCsoma = Synapses(sst_neurons, cc_neurons, model='w: 1', on_pre='g_is+=w*nS', name='SST_CCsoma')  # inhibitory (optional connection)
     pSST_CC = 0
     if sst_target_soma:
-        pSST_CC = p.wSST_CC if use_synaptic_probabilities else 1
+        pSST_CC = p.pSST_CC / 2 if use_synaptic_probabilities else 1  # prob divided between soma & dendrite
 
     conn_SST_CCsoma.connect(p=pSST_CC)  # inhibitory (optional connection)
     conn_SST_CCsoma.w = p.wSST_CC
 
     conn_CCsoma_SST = Synapses(cc_neurons, sst_neurons, model='w: 1', on_pre='g_e+=w*nS', name='CCsoma_SST')  # excitatory
-    conn_CCsoma_SST.connect(p=p.wCC_SST if use_synaptic_probabilities else 1)
+    conn_CCsoma_SST.connect(p=p.pCC_SST if use_synaptic_probabilities else 1)
     conn_CCsoma_SST.w = p.wCC_SST
 
     # CC => CS
     ## target CS soma
     conn_CCsoma_CSsoma = Synapses(cc_neurons, cs_neurons, model='w: 1', on_pre='g_es+=w*nS', name='CC_CSsoma')  # excitatory
-    conn_CCsoma_CSsoma.connect(p=p.wCC_CS if use_synaptic_probabilities else 1)
+    conn_CCsoma_CSsoma.connect(p=p.pCC_CS if use_synaptic_probabilities else 1)
     conn_CCsoma_CSsoma.w = p.wCC_CS
 
     # self connections
     ## CS soma self connection
     conn_CSsoma_CSsoma = Synapses(cs_neurons, cs_neurons, model='w: 1', on_pre='g_es+=w*nS', name='CSsoma_CSsoma')  # excitatory
-    conn_CSsoma_CSsoma.connect(p=p.wCS_CS if use_synaptic_probabilities else 1)
+    conn_CSsoma_CSsoma.connect(p=p.pCS_CS if use_synaptic_probabilities else 1)
     conn_CSsoma_CSsoma.w = p.wCS_CS
 
     backprop_CS = Synapses(cs_neurons, cs_neurons, on_pre={'up': 'K += 1', 'down': 'K -=1'},
@@ -200,7 +202,7 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
 
     ## CC soma self connection
     conn_CCsoma_CCsoma = Synapses(cc_neurons, cc_neurons, model='w: 1', on_pre='g_es+=w*nS', name='CCsoma_CCsoma')  # excitatory
-    conn_CCsoma_CCsoma.connect(p=p.wCC_CC if use_synaptic_probabilities else 1)
+    conn_CCsoma_CCsoma.connect(p=p.pCC_CC if use_synaptic_probabilities else 1)
     conn_CCsoma_CCsoma.w = p.wCC_CC
 
     backprop_CC = Synapses(cc_neurons, cc_neurons, on_pre={'up': 'K += 1', 'down': 'K -=1'},
@@ -209,23 +211,25 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
 
     ## SST self connection
     conn_SST_SST = Synapses(sst_neurons, sst_neurons, model='w: 1', on_pre='g_i+=w*nS', name='SST_SST')  # inhibitory
-    conn_SST_SST.connect(p=p.wSST_SST if use_synaptic_probabilities else 1)
+    conn_SST_SST.connect(p=p.pSST_SST if use_synaptic_probabilities else 1)
     conn_SST_SST.w = p.wSST_SST
 
     ## PV self connection
     conn_PV_PV = Synapses(pv_neurons, pv_neurons, model='w: 1', on_pre='g_i+=w*nS', name='PV_PV')  # inhibitory
-    conn_PV_PV.connect(p=p.wPV_PV if use_synaptic_probabilities else 1)
+    conn_PV_PV.connect(p=p.pPV_PV if use_synaptic_probabilities else 1)
     conn_PV_PV.w = p.wPV_PV
 
     # SST => PYR dendrite
     ## target CS dendrite
     conn_SST_CSdendrite = Synapses(sst_neurons, cs_neurons, model='w: 1', on_pre='g_id+=w*nS', name='SST_CSdendrite')  # inhibitory
-    conn_SST_CSdendrite.connect(p=p.wSST_CS if use_synaptic_probabilities else 1)  # not sure about this here
+    pSST_CSdendrite = p.pSST_CS / 2 if sst_target_soma else p.pSST_CS  # prob divided between soma & dendrite if sst_target_soma=True
+    conn_SST_CSdendrite.connect(p=pSST_CSdendrite if use_synaptic_probabilities else 1)
     conn_SST_CSdendrite.w = p.wSST_CS
 
     ## target CC dendrite
     conn_SST_CCdendrite = Synapses(sst_neurons, cc_neurons, model='w: 1', on_pre='g_id+=w*nS', name='SST_CCdendrite')  # inhibitory
-    conn_SST_CCdendrite.connect(p=p.wSST_CC if use_synaptic_probabilities else 1)  # not sure about this here
+    pSST_CCdendrite = p.pSST_CC / 2 if sst_target_soma else p.pSST_CC # prob divided between soma & dendrite if sst_target_soma=True
+    conn_SST_CCdendrite.connect(p=pSST_CCdendrite if use_synaptic_probabilities else 1)
     conn_SST_CCdendrite.w = p.wSST_CC
 
     # ##############################################################################
@@ -252,7 +256,7 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
 
     defaultclock.dt = sim_dt
 
-    run(duration, report='text')
+    run(sim_duration, report='text')
 
     ################################################################################
     # Analysis and plotting
@@ -268,7 +272,7 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
             equilibrium_times.append(t)
 
         equilibrium_t = max(equilibrium_times) * second
-        if equilibrium_t < duration:
+        if equilibrium_t < sim_duration:
             print(f"Equilibrium for all neurons start at: {equilibrium_t}")
         else:
             print(f"WARNING: Equilibrium was not found during the duration of the simulation")
@@ -278,11 +282,13 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
 
     # Only compute properties of the system from equilibrium time to end simulation time
     from_t = equilibrium_t
-    to_t = duration
+    to_t = sim_duration
 
     print("Plotting results from equilibrium ... ")
 
-    plot_raster(spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv, plot_only_from_equilibrium, from_t, to_t, output_folder=output_folder, file_name='spike_raster_plot')
+    raster_from_t = from_t if plot_only_from_equilibrium else 0
+    raster_to_t = min(raster_from_t + 3*second, sim_duration)
+    plot_raster(spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv, raster_from_t, raster_to_t, output_folder=output_folder, file_name='spike_raster_plot')
 
     plot_states(state_mon_cs, spike_mon_cs, V_t, plot_only_from_equilibrium, from_t, to_t, output_folder=output_folder, file_name='state_plot_CS')
     plot_states(state_mon_cc, spike_mon_cc, V_t, plot_only_from_equilibrium, from_t, to_t, output_folder=output_folder, file_name='state_plot_CC')
@@ -298,11 +304,8 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
     results["firing_rates_sst"] = hlp.compute_firing_rate_for_neuron_type(spike_mon_sst, from_t, to_t)
     results["firing_rates_pv"] = hlp.compute_firing_rate_for_neuron_type(spike_mon_pv, from_t, to_t)
 
-    # Compute input & output selectivity for CC & CS neuron groups
-
-    results["input_selectivity"] = hlp.compute_input_selectivity(I_ext_cs)
-    results["output_selectivity_cs"] = hlp.compute_output_selectivity_for_neuron_type(spike_mon_cs, from_t, to_t)
-    results["output_selectivity_cc"] = hlp.compute_output_selectivity_for_neuron_type(spike_mon_cc, from_t, to_t)
+    firing_rates = [results["firing_rates_cs"], results["firing_rates_cc"], results["firing_rates_sst"], results["firing_rates_pv"]]
+    plot_firing_rate_histograms(firing_rates, no_bins_firing_rates, output_folder=output_folder, file_name='firing_rate_histograms')
 
     # Compute inter-spike intervals for each neuron group
 
@@ -313,29 +316,29 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
 
     # Compute auto-correlation for isi for each neuron group
     # for CS
-    autocorr_cs = hlp.compute_autocorr_struct(results["interspike_intervals_cs"], no_bins)
+    autocorr_cs = hlp.compute_autocorr_struct(results["interspike_intervals_cs"], no_bins_isi)
     if autocorr_cs:
         results["acorr_min_cs"] = autocorr_cs["minimum"]
 
     # for CC
-    autocorr_cc = hlp.compute_autocorr_struct(results["interspike_intervals_cc"], no_bins)
+    autocorr_cc = hlp.compute_autocorr_struct(results["interspike_intervals_cc"], no_bins_isi)
     if autocorr_cc:
         results["acorr_min_cc"] = autocorr_cc["minimum"]
 
 
     # for SST
-    autocorr_sst = hlp.compute_autocorr_struct(results["interspike_intervals_sst"], no_bins)
+    autocorr_sst = hlp.compute_autocorr_struct(results["interspike_intervals_sst"], no_bins_isi)
     if autocorr_sst:
         results["acorr_min_sst"] = autocorr_sst["minimum"]
 
     # for PV
-    autocorr_pv = hlp.compute_autocorr_struct(results["interspike_intervals_pv"], no_bins)
+    autocorr_pv = hlp.compute_autocorr_struct(results["interspike_intervals_pv"], no_bins_isi)
     if autocorr_pv:
         results["acorr_min_sst"] = autocorr_pv["minimum"]
 
     interspike_intervals = [results["interspike_intervals_cs"], results["interspike_intervals_cc"], results["interspike_intervals_sst"], results["interspike_intervals_pv"]]
     autocorr = [autocorr_cs, autocorr_cc, autocorr_sst, autocorr_pv]
-    plot_isi_histograms(interspike_intervals, no_bins, autocorr=autocorr, output_folder=output_folder, file_name='isi_histograms')
+    plot_isi_histograms(interspike_intervals, no_bins_isi, autocorr=autocorr, output_folder=output_folder, file_name='isi_histograms')
 
     # Detect bursts
     # for CS
@@ -365,10 +368,52 @@ def run_simulation(params=None, seed_val=12345, sst_target_soma=True, use_synapt
     return results
 
 
-params = default_params
+I_external_1 = 50
+I_external_2 = 60
+input_selectivity = hlp.compute_selectivity(I_external_1, I_external_2)
 
-results_with_sst_to_soma = run_simulation(params, seed_val=12345, sst_target_soma=True, use_synaptic_probabilities=True, output_folder='output/with_sst_soma')
-hlp.save_results_to_folder(results_with_sst_to_soma, output_folder='output/with_sst_soma')
+params_1 = copy.copy(default_params)
+params_1["I_ext_sst"] = [I_external_1 for i in range(0, params_1["N_sst"])]
+params_1["I_ext_pv"] = [I_external_1 for i in range(0, params_1["N_pv"])]
+params_1["I_ext_cc"] = [I_external_1 for i in range(0, params_1["N_cc"])]
+params_1["I_ext_cs"] = [I_external_1 for i in range(0, params_1["N_cs"])]
 
-results_without_sst_to_soma = run_simulation(params, seed_val=12345, sst_target_soma=False, use_synaptic_probabilities=True, output_folder='output/without_sst_soma')
-hlp.save_results_to_folder(results_without_sst_to_soma, output_folder='output/without_sst_soma')
+params_2 = copy.copy(default_params)
+params_2["I_ext_sst"] = [I_external_2 for i in range(0, params_2["N_sst"])]
+params_2["I_ext_pv"] = [I_external_2 for i in range(0, params_2["N_pv"])]
+params_2["I_ext_cc"] = [I_external_2 for i in range(0, params_2["N_cc"])]
+params_2["I_ext_cs"] = [I_external_2 for i in range(0, params_2["N_cs"])]
+
+
+# SST -> SOMA connection present
+results_with_sst_to_soma_1 = run_simulation(params_1, seed_val=12345, sst_target_soma=True, use_synaptic_probabilities=True, output_folder='output/with_sst_soma/1')
+results_with_sst_to_soma_2 = run_simulation(params_2, seed_val=12345, sst_target_soma=True, use_synaptic_probabilities=True, output_folder='output/with_sst_soma/2')
+
+hlp.save_results_to_folder(results_with_sst_to_soma_1, output_folder='output/with_sst_soma', file_name='results_with_sst_soma_1.json')
+hlp.save_results_to_folder(results_with_sst_to_soma_2, output_folder='output/with_sst_soma', file_name='results_with_sst_soma_2.json')
+
+agg_results_with_sst_to_soma = {}
+agg_results_with_sst_to_soma["input_selectivity"] = input_selectivity
+agg_results_with_sst_to_soma["output_selectivity_cs"] = hlp.compute_selectivity(np.mean(results_with_sst_to_soma_1["firing_rates_cs"]), np.mean(results_with_sst_to_soma_2["firing_rates_cs"]))
+agg_results_with_sst_to_soma["output_selectivity_cc"] = hlp.compute_selectivity(np.mean(results_with_sst_to_soma_1["firing_rates_cc"]), np.mean(results_with_sst_to_soma_2["firing_rates_cc"]))
+agg_results_with_sst_to_soma["output_selectivity_sst"] = hlp.compute_selectivity(np.mean(results_with_sst_to_soma_1["firing_rates_sst"]), np.mean(results_with_sst_to_soma_2["firing_rates_sst"]))
+agg_results_with_sst_to_soma["output_selectivity_pv"] = hlp.compute_selectivity(np.mean(results_with_sst_to_soma_1["firing_rates_pv"]), np.mean(results_with_sst_to_soma_2["firing_rates_pv"]))
+hlp.save_agg_results_to_folder(agg_results_with_sst_to_soma, output_folder='output/with_sst_soma', file_name='agg_results_with_sst_soma.json')
+
+
+# SST -> SOMA connection NOT present
+results_without_sst_to_soma_1 = run_simulation(params_1, seed_val=12345, sst_target_soma=False, use_synaptic_probabilities=True, output_folder='output/without_sst_soma/1')
+results_without_sst_to_soma_2 = run_simulation(params_2, seed_val=12345, sst_target_soma=False, use_synaptic_probabilities=True, output_folder='output/without_sst_soma/2')
+
+hlp.save_results_to_folder(results_without_sst_to_soma_1, output_folder='output/without_sst_soma', file_name='results_without_sst_soma_1.json')
+hlp.save_results_to_folder(results_without_sst_to_soma_2, output_folder='output/without_sst_soma', file_name='results_without_sst_soma_2.json')
+
+agg_results_without_sst_to_soma = {}
+agg_results_without_sst_to_soma["input_selectivity"] = input_selectivity
+agg_results_without_sst_to_soma["output_selectivity_cs"] = hlp.compute_selectivity(np.mean(results_without_sst_to_soma_1["firing_rates_cs"]), np.mean(results_without_sst_to_soma_2["firing_rates_cs"]))
+agg_results_without_sst_to_soma["output_selectivity_cc"] = hlp.compute_selectivity(np.mean(results_without_sst_to_soma_1["firing_rates_cc"]), np.mean(results_without_sst_to_soma_2["firing_rates_cc"]))
+agg_results_without_sst_to_soma["output_selectivity_sst"] = hlp.compute_selectivity(np.mean(results_without_sst_to_soma_1["firing_rates_sst"]), np.mean(results_without_sst_to_soma_2["firing_rates_sst"]))
+agg_results_without_sst_to_soma["output_selectivity_pv"] = hlp.compute_selectivity(np.mean(results_without_sst_to_soma_1["firing_rates_pv"]), np.mean(results_without_sst_to_soma_2["firing_rates_pv"]))
+hlp.save_agg_results_to_folder(agg_results_without_sst_to_soma, output_folder='output/without_sst_soma', file_name='agg_results_without_sst_soma.json')
+
+
