@@ -52,10 +52,6 @@ def compute_firing_rate_for_neuron_type(spike_mon, from_t, to_t):
     return spikes_for_i / duration
 
 
-def compute_selectivity(input_1, input_2):
-    return np.abs(input_1 - input_2) / (input_1 + input_2)
-
-
 def compute_interspike_intervals(spike_mon, from_t, to_t):
     by_neuron = []
 
@@ -190,15 +186,8 @@ def save_agg_results_to_folder(results, output_folder=None, file_name='results.j
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
 
-        dump = {}
-        dump['input_selectivity'] = '%.3f' % results["input_selectivity"]
-        dump['output_selectivity_cs'] = '%.3f' % results["output_selectivity_cs"]
-        dump['output_selectivity_cc'] = '%.3f' % results["output_selectivity_cc"]
-        dump['output_selectivity_sst'] = '%.3f' % results["output_selectivity_sst"]
-        dump['output_selectivity_pv'] = '%.3f' % results["output_selectivity_pv"]
-
         json_file = open(f'{output_folder}/{file_name}', 'w')
-        json_file.write(json.dumps(dump, indent=4))
+        json_file.write(json.dumps(results, indent=4))
         json_file.close()
 
 
@@ -258,4 +247,67 @@ def distributionInput(a_data, b_data, spatialF, temporalF, orientation, spatialP
 
     inputs = np.concatenate((inputs_p_all), axis=1)
 
-    return (inputs)
+    return inputs
+
+
+def compute_selectivity(input_1, input_2):
+    return np.abs(input_1 - input_2) / (input_1 + input_2)
+
+
+def calculate_selectivity_sbi(fire_rates):
+    """
+    Calculate mean and std of selectivity.
+    fire rates should contain a vector of size 4, containing fire rate measurements
+    for stimulus of 4 directions [0, 90, 180, 270] degrees
+    """
+    assert len(fire_rates) == 4
+
+    preferred_orientation_idx = np.argmax(fire_rates)  # get the index of the maximum firing rate
+
+    # fire rate of preferred stimulus
+    fire_rate_preferred = fire_rates[preferred_orientation_idx]
+
+    # average fire rate of preferred stimulus in both directions
+    fire_rate_preferred_orientation = np.mean([
+        fire_rates[preferred_orientation_idx],
+        fire_rates[(preferred_orientation_idx + 2) % 4]
+    ])
+
+    # fire rate of orthogonal stimulus in both directions
+    fire_rate_orthogonal = np.mean([
+        fire_rates[(preferred_orientation_idx + 1) % 4],
+        fire_rates[(preferred_orientation_idx + 3) % 4]
+    ])
+
+    # fire rate of opposite stimulus
+    fire_rate_opposite = fire_rates[(preferred_orientation_idx + 2) % 4]
+
+    orientation_selectivity = compute_selectivity(fire_rate_preferred_orientation, fire_rate_orthogonal)
+    direction_selectivity = compute_selectivity(fire_rate_preferred, fire_rate_opposite)
+    direction_selectivity_paper = compute_selectivity(fire_rate_preferred, fire_rate_orthogonal)  # TODO Is this needed?
+
+    selectivity = {}
+    selectivity["orientation"] = orientation_selectivity
+    selectivity["direction"] = direction_selectivity
+    selectivity["direction_paper"] = direction_selectivity_paper
+
+    return selectivity
+
+
+def calculate_aggregate_results(individual_results):
+    agg_results = {}
+    agg_results["input_selectivity"] = 0.0  # TODO How to calculate now input selectivity?
+
+    fire_rates_CS = [np.mean(result["firing_rates_cs"]) for result in individual_results]
+    agg_results["output_selectivity_cs"] = calculate_selectivity_sbi(fire_rates_CS)
+
+    fire_rates_CC = [np.mean(result["firing_rates_cc"]) for result in individual_results]
+    agg_results["output_selectivity_cc"] = calculate_selectivity_sbi(fire_rates_CC)
+
+    fire_rates_SST = [np.mean(result["firing_rates_sst"]) for result in individual_results]
+    agg_results["output_selectivity_sst"] = calculate_selectivity_sbi(fire_rates_SST)
+
+    fire_rates_PV = [np.mean(result["firing_rates_pv"]) for result in individual_results]
+    agg_results["output_selectivity_pv"] = calculate_selectivity_sbi(fire_rates_PV)
+
+    return agg_results
