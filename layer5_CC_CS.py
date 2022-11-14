@@ -379,12 +379,14 @@ def simulate_with_different_inputs(params, simulate_with_sst_soma=True, simulate
     input_steady = [p.I_cs_steady, p.I_cc_steady, p.I_sst_steady, p.I_pv_steady]  # TODO What is this?
     input_amplitudes = [p.I_cs_amp, p.I_cc_amp, p.I_sst_amp, p.I_pv_amp]
 
-    a_data = np.cos(np.random.uniform(0, np.pi, (np.sum(N),)))
-    b_data = np.sin(np.random.uniform(0, np.pi, (np.sum(N),)))
+    length = np.random.uniform(0, 1, (np.sum(N),))
+    angle = np.pi * np.random.uniform(0, 2, (np.sum(N),))
+    a_data = np.sqrt(length) * np.cos(angle)
+    b_data = np.sqrt(length) * np.sin(angle)
 
-    spatial_F = 1  # TODO What exactly does this do?
-    temporal_F = 1  # TODO What exactly does this do?
-    spatial_phase = 1  # TODO What exactly does this do?
+    spatial_F = 10  # TODO What exactly does `spatial_F` do?
+    temporal_F = 50  # TODO What exactly does `temporal_F` do?
+    spatial_phase = 1  # TODO What exactly does `spatial_phase` do?
     tsteps = int(p.duration / p.sim_dt)
 
     ################## iterate through different inputs ##################
@@ -443,4 +445,4 @@ def simulate_with_different_inputs(params, simulate_with_sst_soma=True, simulate
                                        file_name='agg_results.json')
 
 
-simulate_with_different_inputs(default_params, simulate_with_sst_soma=True, simulate_without_sst_soma=True, seed_val=12345)
+simulate_with_different_inputs(default_params, simulate_with_sst_soma=False, simulate_without_sst_soma=True, seed_val=12345)

@@ -41,6 +41,8 @@ def plot_raster(spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv, from_t=
 
         fig.savefig('%s/%s.pdf' % (output_folder, file_name), bbox_inches='tight')
 
+    plt.close(fig)
+
 
 def plot_states(state_mon, spike_mon, spike_thld,
                 plot_only_from_equilibrium=False, from_t=None, to_t=None,
@@ -84,6 +86,8 @@ def plot_states(state_mon, spike_mon, spike_thld,
 
         fig.savefig('%s/%s.pdf' % (output_folder, file_name), bbox_inches='tight')
 
+    plt.close(fig)
+
 
 def plot_firing_rate_histograms(firing_rates, no_bins, output_folder=None, file_name='firing_rate_histograms'):
     columns = 2
@@ -108,6 +112,8 @@ def plot_firing_rate_histograms(firing_rates, no_bins, output_folder=None, file_
             os.makedirs(output_folder)
 
         fig.savefig('%s/%s.pdf' % (output_folder, file_name), bbox_inches='tight')
+
+    plt.close(fig)
 
 
 def plot_isi_histograms(interspike_intervals, no_bins, autocorr=None, output_folder=None, file_name='isi_histograms'):
@@ -154,3 +160,5 @@ def plot_isi_histograms(interspike_intervals, no_bins, autocorr=None, output_fol
             os.makedirs(output_folder)
 
         fig.savefig('%s/%s.pdf' % (output_folder, file_name), bbox_inches='tight')
+
+    plt.close(fig)

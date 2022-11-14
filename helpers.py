@@ -197,15 +197,10 @@ def save_results_to_folder(results, output_folder=None, file_name='results.json'
             os.makedirs(output_folder)
 
         dump = {}
-        dump['avg_firing_rate_cs'] = np.mean(results["firing_rates_cs"])
-        dump['avg_firing_rate_cc'] = np.mean(results["firing_rates_cc"])
-        dump['avg_firing_rate_sst'] = np.mean(results["firing_rates_sst"])
-        dump['avg_firing_rate_pv'] = np.mean(results["firing_rates_pv"])
-
-        # dump["burst_lengths_cs"] = results.get("burst_lengths_cs")
-        # dump["burst_lengths_cc"] = results.get("burst_lengths_cc")
-        # dump["burst_lengths_sst"] = results.get("burst_lengths_sst")
-        # dump["burst_lengths_pv"] = results.get("burst_lengths_pv")
+        dump['avg_firing_rate_cs'] = np.around(np.mean(results["firing_rates_cs"]), decimals=3)
+        dump['avg_firing_rate_cc'] = np.around(np.mean(results["firing_rates_cc"]), decimals=3)
+        dump['avg_firing_rate_sst'] = np.around(np.mean(results["firing_rates_sst"]), decimals=3)
+        dump['avg_firing_rate_pv'] = np.around(np.mean(results["firing_rates_pv"]), decimals=3)
 
         json_file = open(f'{output_folder}/{file_name}', 'w')
         json_file.write(json.dumps(dump, indent=4))
@@ -287,16 +282,16 @@ def calculate_selectivity_sbi(fire_rates):
     direction_selectivity_paper = compute_selectivity(fire_rate_preferred, fire_rate_orthogonal)  # TODO Is this needed?
 
     selectivity = {}
-    selectivity["orientation"] = orientation_selectivity
-    selectivity["direction"] = direction_selectivity
-    selectivity["direction_paper"] = direction_selectivity_paper
+    selectivity["orientation"] = np.around(orientation_selectivity, decimals=3)
+    selectivity["direction"] = np.around(direction_selectivity, decimals=3)
+    selectivity["direction_paper"] = np.around(direction_selectivity_paper, decimals=3)
 
     return selectivity
 
 
 def calculate_aggregate_results(individual_results):
     agg_results = {}
-    agg_results["input_selectivity"] = 0.0  # TODO How to calculate now input selectivity?
+    agg_results["input_selectivity"] = 0.0  # TODO Calculate now input selectivity
 
     fire_rates_CS = [np.mean(result["firing_rates_cs"]) for result in individual_results]
     agg_results["output_selectivity_cs"] = calculate_selectivity_sbi(fire_rates_CS)
