@@ -52,10 +52,6 @@ def compute_firing_rate_for_neuron_type(spike_mon, from_t, to_t):
     return spikes_for_i / duration
 
 
-def compute_selectivity(input_1, input_2):
-    return np.abs(input_1 - input_2) / (input_1 + input_2)
-
-
 def compute_interspike_intervals(spike_mon, from_t, to_t):
     by_neuron = []
 
@@ -190,15 +186,8 @@ def save_agg_results_to_folder(results, output_folder=None, file_name='results.j
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
 
-        dump = {}
-        dump['input_selectivity'] = '%.3f' % results["input_selectivity"]
-        dump['output_selectivity_cs'] = '%.3f' % results["output_selectivity_cs"]
-        dump['output_selectivity_cc'] = '%.3f' % results["output_selectivity_cc"]
-        dump['output_selectivity_sst'] = '%.3f' % results["output_selectivity_sst"]
-        dump['output_selectivity_pv'] = '%.3f' % results["output_selectivity_pv"]
-
         json_file = open(f'{output_folder}/{file_name}', 'w')
-        json_file.write(json.dumps(dump, indent=4))
+        json_file.write(json.dumps(results, indent=4))
         json_file.close()
 
 
@@ -208,16 +197,112 @@ def save_results_to_folder(results, output_folder=None, file_name='results.json'
             os.makedirs(output_folder)
 
         dump = {}
-        dump['avg_firing_rate_cs'] = '%.3f' % np.mean(results["firing_rates_cs"])
-        dump['avg_firing_rate_cc'] = '%.3f' % np.mean(results["firing_rates_cc"])
-        dump['avg_firing_rate_sst'] = '%.3f' % np.mean(results["firing_rates_sst"])
-        dump['avg_firing_rate_pv'] = '%.3f' % np.mean(results["firing_rates_pv"])
-
-        # dump["burst_lengths_cs"] = results.get("burst_lengths_cs")
-        # dump["burst_lengths_cc"] = results.get("burst_lengths_cc")
-        # dump["burst_lengths_sst"] = results.get("burst_lengths_sst")
-        # dump["burst_lengths_pv"] = results.get("burst_lengths_pv")
+        dump['avg_firing_rate_cs'] = np.around(np.mean(results["firing_rates_cs"]), decimals=3)
+        dump['avg_firing_rate_cc'] = np.around(np.mean(results["firing_rates_cc"]), decimals=3)
+        dump['avg_firing_rate_sst'] = np.around(np.mean(results["firing_rates_sst"]), decimals=3)
+        dump['avg_firing_rate_pv'] = np.around(np.mean(results["firing_rates_pv"]), decimals=3)
 
         json_file = open(f'{output_folder}/{file_name}', 'w')
         json_file.write(json.dumps(dump, indent=4))
         json_file.close()
+
+
+def distributionInput(a_data, b_data, spatialF, temporalF, orientation, spatialPhase, amplitude, T, steady_input, N):
+    """
+    Generates a moving bar as input to CS, CC, PV, SST.
+    Using the function from textbook theoretical neurosciences.
+    Turning the image into stimulus by converting the difference between that pixel over time and the
+    difference between the pixel and the overall backaground level of luminance.
+    Output: Stimulus to the L5 neuron
+    Steady_input: making a check to make sure the input is steady.
+    """
+
+    i = 0
+    inputs_p_all = []
+    N_indices = [[0, N[0]], [sum(N[:1]), sum(N[:2])], [sum(N[:2]), sum(N[:3])], [sum(N[:3]), sum(N)]]
+    for popu in N_indices:
+        inputs_p = []
+
+        if steady_input[i] > 0.5:
+            for t in range(T):
+                inputs_p.append(amplitude[i] * np.cos(
+                    spatialF * a_data[popu[0]:popu[1]] * np.cos(orientation) +
+                    spatialF * b_data[popu[0]:popu[1]] * np.sin(orientation) - spatialPhase)
+                                * np.cos(temporalF) + amplitude[i])
+            inputs_p = np.array(inputs_p)
+        else:
+            for t in range(T):
+                inputs_p.append(amplitude[i] * np.cos(
+                    spatialF * a_data[popu[0]:popu[1]] * np.cos(orientation) +
+                    spatialF * b_data[popu[0]:popu[1]] * np.sin(orientation) - spatialPhase)
+                                * np.cos(temporalF * t) + amplitude[i])
+            inputs_p = np.array(inputs_p)
+        i += 1
+        inputs_p_all.append(inputs_p)
+
+    inputs = np.concatenate((inputs_p_all), axis=1)
+
+    return inputs
+
+
+def compute_selectivity(input_1, input_2):
+    return np.abs(input_1 - input_2) / (input_1 + input_2)
+
+
+def calculate_selectivity_sbi(fire_rates):
+    """
+    Calculate mean and std of selectivity.
+    fire rates should contain a vector of size 4, containing fire rate measurements
+    for stimulus of 4 directions [0, 90, 180, 270] degrees
+    """
+    assert len(fire_rates) == 4
+
+    preferred_orientation_idx = np.argmax(fire_rates)  # get the index of the maximum firing rate
+
+    # fire rate of preferred stimulus
+    fire_rate_preferred = fire_rates[preferred_orientation_idx]
+
+    # average fire rate of preferred stimulus in both directions
+    fire_rate_preferred_orientation = np.mean([
+        fire_rates[preferred_orientation_idx],
+        fire_rates[(preferred_orientation_idx + 2) % 4]
+    ])
+
+    # fire rate of orthogonal stimulus in both directions
+    fire_rate_orthogonal = np.mean([
+        fire_rates[(preferred_orientation_idx + 1) % 4],
+        fire_rates[(preferred_orientation_idx + 3) % 4]
+    ])
+
+    # fire rate of opposite stimulus
+    fire_rate_opposite = fire_rates[(preferred_orientation_idx + 2) % 4]
+
+    orientation_selectivity = compute_selectivity(fire_rate_preferred_orientation, fire_rate_orthogonal)
+    direction_selectivity = compute_selectivity(fire_rate_preferred, fire_rate_opposite)
+    direction_selectivity_paper = compute_selectivity(fire_rate_preferred, fire_rate_orthogonal)  # TODO Is this needed?
+
+    selectivity = {}
+    selectivity["orientation"] = np.around(orientation_selectivity, decimals=3)
+    selectivity["direction"] = np.around(direction_selectivity, decimals=3)
+    selectivity["direction_paper"] = np.around(direction_selectivity_paper, decimals=3)
+
+    return selectivity
+
+
+def calculate_aggregate_results(individual_results):
+    agg_results = {}
+    agg_results["input_selectivity"] = 0.0  # TODO Calculate now input selectivity
+
+    fire_rates_CS = [np.mean(result["firing_rates_cs"]) for result in individual_results]
+    agg_results["output_selectivity_cs"] = calculate_selectivity_sbi(fire_rates_CS)
+
+    fire_rates_CC = [np.mean(result["firing_rates_cc"]) for result in individual_results]
+    agg_results["output_selectivity_cc"] = calculate_selectivity_sbi(fire_rates_CC)
+
+    fire_rates_SST = [np.mean(result["firing_rates_sst"]) for result in individual_results]
+    agg_results["output_selectivity_sst"] = calculate_selectivity_sbi(fire_rates_SST)
+
+    fire_rates_PV = [np.mean(result["firing_rates_pv"]) for result in individual_results]
+    agg_results["output_selectivity_pv"] = calculate_selectivity_sbi(fire_rates_PV)
+
+    return agg_results

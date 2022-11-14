@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib
 import os
 
+from matplotlib.lines import Line2D
+
 matplotlib.use('Agg')
 
 from matplotlib import pyplot as plt
@@ -23,23 +25,43 @@ def plot_raster(spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv, from_t=
     fig = plt.figure()
     ax1 = fig.add_subplot(1, 1, 1)
 
-    ax1.scatter(spike_mon_cs.t / ms, spike_mon_cs.i, s=0.2, color='b', label='CS')
-    ax1.scatter(spike_mon_cc.t / ms, len(spike_mon_cs.count) + spike_mon_cc.i, s=0.2, color='r', label='CC')
-    ax1.scatter(spike_mon_sst.t / ms, (len(spike_mon_cs.count) + len(spike_mon_cc.count)) + spike_mon_sst.i, s=0.2, color='g', label='SST')
-    ax1.scatter(spike_mon_pv.t / ms, (len(spike_mon_cs.count) + len(spike_mon_cc.count) + len(spike_mon_sst.count)) + spike_mon_pv.i, s=0.2, color='y', label='PV')
+    N_cs = len(spike_mon_cs.count)
+    N_cc = len(spike_mon_cc.count)
+    N_sst = len(spike_mon_sst.count)
+    N_pv = len(spike_mon_pv.count)
+    N = N_cs + N_cc + N_sst + N_pv
+    ax1.eventplot(spike_mon_cs.i[:, np.newaxis], lineoffsets=spike_mon_cs.t / ms, orientation='vertical', colors='b',
+              linewidths=2)
+    # ax1.axhline(N_cs - 1/2, lw=0.5, color='k')
+    ax1.eventplot((N_cs + spike_mon_cc.i)[:, np.newaxis], lineoffsets=spike_mon_cc.t / ms, orientation='vertical',
+              colors='r', linewidths=2)
+    # ax1.axhline(N_cs + N_cc - 1/2, lw=0.5, color='k')
+    ax1.eventplot(((N_cs + N_cc) + spike_mon_sst.i)[:, np.newaxis], lineoffsets=spike_mon_sst.t / ms,
+              orientation='vertical', colors='g', linewidths=2)
+    # ax1.axhline(N_cs + N_cc + N_sst - 1/2, lw=0.5, color='k')
+    ax1.eventplot(((N_cs + N_cc + N_sst) + spike_mon_pv.i)[:, np.newaxis], lineoffsets=spike_mon_pv.t / ms,
+              orientation='vertical', colors='y', linewidths=2)
+
+    custom_handles = [Line2D([0], [0], color='y', lw=1, label='PV'),
+                      Line2D([0], [0], color='g', lw=1, label='SST'),
+                      Line2D([0], [0], color='r', lw=1, label='CS'),
+                      Line2D([0], [0], color='b', lw=1, label='CC')]
 
     ax1.set_xlabel('Time (ms)')
     ax1.set_ylabel('Neuron index')
-    ax1.legend(loc='best')
+    ax1.legend(handles=custom_handles, loc='best')
     ax1.set_title('Spike Raster Plot')
 
     ax1.set_xlim(left=from_t / ms, right=to_t / ms)
+    ax1.set_ylim(bottom=-1 / 2, top=N - 1 / 2)
 
     if output_folder is not None:
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
 
         fig.savefig('%s/%s.pdf' % (output_folder, file_name), bbox_inches='tight')
+
+    plt.close(fig)
 
 
 def plot_states(state_mon, spike_mon, spike_thld,
@@ -84,6 +106,8 @@ def plot_states(state_mon, spike_mon, spike_thld,
 
         fig.savefig('%s/%s.pdf' % (output_folder, file_name), bbox_inches='tight')
 
+    plt.close(fig)
+
 
 def plot_firing_rate_histograms(firing_rates, no_bins, output_folder=None, file_name='firing_rate_histograms'):
     columns = 2
@@ -108,6 +132,8 @@ def plot_firing_rate_histograms(firing_rates, no_bins, output_folder=None, file_
             os.makedirs(output_folder)
 
         fig.savefig('%s/%s.pdf' % (output_folder, file_name), bbox_inches='tight')
+
+    plt.close(fig)
 
 
 def plot_isi_histograms(interspike_intervals, no_bins, autocorr=None, output_folder=None, file_name='isi_histograms'):
@@ -154,3 +180,5 @@ def plot_isi_histograms(interspike_intervals, no_bins, autocorr=None, output_fol
             os.makedirs(output_folder)
 
         fig.savefig('%s/%s.pdf' % (output_folder, file_name), bbox_inches='tight')
+
+    plt.close(fig)
