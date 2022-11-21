@@ -182,3 +182,65 @@ def plot_isi_histograms(interspike_intervals, no_bins, autocorr=None, output_fol
         fig.savefig('%s/%s.pdf' % (output_folder, file_name), bbox_inches='tight')
 
     plt.close(fig)
+
+
+def plot_selectivity_comparison(agg_results_with_sst, agg_results_without_sst, output_folder=None, file_name='selectivity_comparison'):
+    """ Plots the orientation and direction selectivity for all neuron groups"""
+
+    fig, axs = plt.subplots(1, 3, figsize=(26, 4))
+    bar_width = 0.4
+    x = np.arange(2) / 2
+    labels = ['With SST->Soma', 'Without SST->Soma']
+
+    orientation_s_cs = [agg_results_with_sst["output_selectivity_cs"]["orientation"], agg_results_without_sst["output_selectivity_cs"]["orientation"]]
+    orientation_s_cc = [agg_results_with_sst["output_selectivity_cc"]["orientation"], agg_results_without_sst["output_selectivity_cc"]["orientation"]]
+    orientation_s_sst = [agg_results_with_sst["output_selectivity_sst"]["orientation"], agg_results_without_sst["output_selectivity_sst"]["orientation"]]
+    orientation_s_pv = [agg_results_with_sst["output_selectivity_pv"]["orientation"], agg_results_without_sst["output_selectivity_pv"]["orientation"]]
+
+    # plot orientation selectivity
+    axs[0].bar(x, orientation_s_cs, bar_width / 4, label="CS", color='b')
+    axs[0].bar(x + bar_width / 4, orientation_s_cc, bar_width / 4, label="CC", color='r')
+    axs[0].bar(x + bar_width / 2, orientation_s_sst, bar_width / 4, label="SST", color='g')
+    axs[0].bar(x + bar_width * 3 / 4, orientation_s_pv, bar_width / 4, label="PV", color='y')
+    axs[0].set_ylabel('Orientation selectivity')
+    axs[0].set_xticks(x + bar_width / 4)
+    axs[0].set_xticklabels(labels)
+    axs[0].legend(loc='best')
+
+    orientation_s_paper_cs = [agg_results_with_sst["output_selectivity_cs"]["orientation_paper"], agg_results_without_sst["output_selectivity_cs"]["orientation_paper"]]
+    orientation_s_paper_cc = [agg_results_with_sst["output_selectivity_cc"]["orientation_paper"], agg_results_without_sst["output_selectivity_cc"]["orientation_paper"]]
+    orientation_s_paper_sst = [agg_results_with_sst["output_selectivity_sst"]["orientation_paper"], agg_results_without_sst["output_selectivity_sst"]["orientation_paper"]]
+    orientation_s_paper_pv = [agg_results_with_sst["output_selectivity_pv"]["orientation_paper"], agg_results_without_sst["output_selectivity_pv"]["orientation_paper"]]
+
+    # plot orientation selectivity
+    axs[1].bar(x, orientation_s_paper_cs, bar_width / 4, label="CS", color='b')
+    axs[1].bar(x + bar_width / 4, orientation_s_paper_cc, bar_width / 4, label="CC", color='r')
+    axs[1].bar(x + bar_width / 2, orientation_s_paper_sst, bar_width / 4, label="SST", color='g')
+    axs[1].bar(x + bar_width * 3 / 4, orientation_s_paper_pv, bar_width / 4, label="PV", color='y')
+    axs[1].set_ylabel('Orientation selectivity (paper)')
+    axs[1].set_xticks(x + bar_width / 4)
+    axs[1].set_xticklabels(labels)
+    axs[1].legend(loc='best')
+
+    direction_s_cs = [agg_results_with_sst["output_selectivity_cs"]["direction"], agg_results_without_sst["output_selectivity_cs"]["direction"]]
+    direction_s_cc = [agg_results_with_sst["output_selectivity_cc"]["direction"], agg_results_without_sst["output_selectivity_cc"]["direction"]]
+    direction_s_sst = [agg_results_with_sst["output_selectivity_sst"]["direction"], agg_results_without_sst["output_selectivity_sst"]["direction"]]
+    direction_s_pv = [agg_results_with_sst["output_selectivity_pv"]["direction"], agg_results_without_sst["output_selectivity_pv"]["direction"]]
+
+    # plot direction selectivity
+    axs[2].bar(x, direction_s_cs, bar_width / 4, label="CS", color='b')
+    axs[2].bar(x + bar_width / 4, direction_s_cc, bar_width / 4, label="CC", color='r')
+    axs[2].bar(x + bar_width / 2, direction_s_sst, bar_width / 4, label="SST", color='g')
+    axs[2].bar(x + bar_width * 3 / 4, direction_s_pv, bar_width / 4, label="PV", color='y')
+    axs[2].set_ylabel('Direction selectivity')
+    axs[2].set_xticks(x + bar_width / 4)
+    axs[2].set_xticklabels(labels)
+    axs[2].legend(loc='best')
+
+    if output_folder is not None:
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+
+        fig.savefig('%s/%s.pdf' % (output_folder, file_name), bbox_inches='tight')
+
+    plt.close(fig)
