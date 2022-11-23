@@ -444,5 +444,8 @@ def simulate_with_different_inputs(params, simulate_with_sst_soma=True, simulate
                                        output_folder='output/without_sst_soma',
                                        file_name='agg_results.json')
 
+    if simulate_with_sst_soma and simulate_without_sst_soma:
+        plot_selectivity_comparison(agg_results_with_sst=agg_results_with_sst_to_soma, agg_results_without_sst=agg_results_without_sst_to_soma, output_folder='output')
 
-simulate_with_different_inputs(default_params, simulate_with_sst_soma=False, simulate_without_sst_soma=True, seed_val=12345)
+
+simulate_with_different_inputs(default_params, simulate_with_sst_soma=True, simulate_without_sst_soma=True, seed_val=12345)

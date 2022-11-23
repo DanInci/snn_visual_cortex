@@ -249,7 +249,7 @@ def compute_selectivity(input_1, input_2):
     return np.abs(input_1 - input_2) / (input_1 + input_2)
 
 
-def calculate_selectivity_sbi(fire_rates):
+def calculate_selectivity(fire_rates):
     """
     Calculate mean and std of selectivity.
     fire rates should contain a vector of size 4, containing fire rate measurements
@@ -269,7 +269,7 @@ def calculate_selectivity_sbi(fire_rates):
     ])
 
     # fire rate of orthogonal stimulus in both directions
-    fire_rate_orthogonal = np.mean([
+    fire_rate_orthogonal_orientation = np.mean([
         fire_rates[(preferred_orientation_idx + 1) % 4],
         fire_rates[(preferred_orientation_idx + 3) % 4]
     ])
@@ -277,32 +277,32 @@ def calculate_selectivity_sbi(fire_rates):
     # fire rate of opposite stimulus
     fire_rate_opposite = fire_rates[(preferred_orientation_idx + 2) % 4]
 
-    orientation_selectivity = compute_selectivity(fire_rate_preferred_orientation, fire_rate_orthogonal)
+    orientation_selectivity = compute_selectivity(fire_rate_preferred_orientation, fire_rate_orthogonal_orientation)
+    orientation_selectivity_paper = compute_selectivity(fire_rate_preferred, fire_rate_orthogonal_orientation)
     direction_selectivity = compute_selectivity(fire_rate_preferred, fire_rate_opposite)
-    direction_selectivity_paper = compute_selectivity(fire_rate_preferred, fire_rate_orthogonal)  # TODO Is this needed?
 
     selectivity = {}
     selectivity["orientation"] = np.around(orientation_selectivity, decimals=3)
+    selectivity["orientation_paper"] = np.around(orientation_selectivity_paper, decimals=3)
     selectivity["direction"] = np.around(direction_selectivity, decimals=3)
-    selectivity["direction_paper"] = np.around(direction_selectivity_paper, decimals=3)
 
     return selectivity
 
 
 def calculate_aggregate_results(individual_results):
     agg_results = {}
-    agg_results["input_selectivity"] = 0.0  # TODO Calculate now input selectivity
+    agg_results["input_selectivity"] = 0.0  # TODO Calculate input selectivity
 
     fire_rates_CS = [np.mean(result["firing_rates_cs"]) for result in individual_results]
-    agg_results["output_selectivity_cs"] = calculate_selectivity_sbi(fire_rates_CS)
+    agg_results["output_selectivity_cs"] = calculate_selectivity(fire_rates_CS)
 
     fire_rates_CC = [np.mean(result["firing_rates_cc"]) for result in individual_results]
-    agg_results["output_selectivity_cc"] = calculate_selectivity_sbi(fire_rates_CC)
+    agg_results["output_selectivity_cc"] = calculate_selectivity(fire_rates_CC)
 
     fire_rates_SST = [np.mean(result["firing_rates_sst"]) for result in individual_results]
-    agg_results["output_selectivity_sst"] = calculate_selectivity_sbi(fire_rates_SST)
+    agg_results["output_selectivity_sst"] = calculate_selectivity(fire_rates_SST)
 
     fire_rates_PV = [np.mean(result["firing_rates_pv"]) for result in individual_results]
-    agg_results["output_selectivity_pv"] = calculate_selectivity_sbi(fire_rates_PV)
+    agg_results["output_selectivity_pv"] = calculate_selectivity(fire_rates_PV)
 
     return agg_results
