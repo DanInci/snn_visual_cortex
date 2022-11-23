@@ -244,3 +244,115 @@ def plot_selectivity_comparison(agg_results_with_sst, agg_results_without_sst, o
         fig.savefig('%s/%s.pdf' % (output_folder, file_name), bbox_inches='tight')
 
     plt.close(fig)
+
+
+def visualise_synapse_group_connectivity(ax, S, S_reverse):
+    if S:
+        Ns = len(S.source)
+        Nt = len(S.target)
+        ax.set_xlim(-1, Ns)
+        ax.set_ylim(-1, Nt)
+        ax.plot(S.i, S.j, '>b')
+
+    if S_reverse:
+        ax.plot(S_reverse.j, S_reverse.i, '<g')
+
+    ax.set_xlabel('Source neuron index')
+    ax.set_ylabel('Target neuron index')
+
+
+def visualise_SST_connectivity(axs, conn):
+    axs[0].set_title('SST <=> SST')
+    visualise_synapse_group_connectivity(axs[0], conn.get("SST_SST"), conn.get("SST_SST"))
+
+    axs[1].set_title('SST <=> PV')
+    visualise_synapse_group_connectivity(axs[1], conn.get("SST_PV"), conn.get("PV_SST"))
+
+    axs[2].set_title('SST <=> CS Soma')
+    visualise_synapse_group_connectivity(axs[2], conn.get("SST_CSsoma"), conn.get("CSsoma_SST"))
+
+    axs[3].set_title('SST => CS Dendrite')
+    visualise_synapse_group_connectivity(axs[3], conn.get("SST_CSdendrite"), None)
+
+    axs[4].set_title('SST <=> CC Soma')
+    visualise_synapse_group_connectivity(axs[4], conn.get("SST_CCsoma"), conn.get("CCsoma_SST"))
+
+    axs[5].set_title('SST => CC Dendrite')
+    visualise_synapse_group_connectivity(axs[5], conn.get("SST_CCdendrite"), None)
+
+
+def visualise_PV_connectivity(axs, conn):
+    axs[0].set_title('PV <=> SST')
+    visualise_synapse_group_connectivity(axs[0], conn.get("PV_SST"), conn.get("SST_PV"))
+
+    axs[1].set_title('PV <=> PV')
+    visualise_synapse_group_connectivity(axs[1], conn.get("PV_PV"), conn.get("PV_PV"))
+
+    axs[2].set_title('PV <=> CS Soma')
+    visualise_synapse_group_connectivity(axs[2], conn.get("PV_CSsoma"), conn.get("CSsoma_PV"))
+
+    axs[3].set_title('PV =/= CS Dendrite')
+    #     visualise_synapse_group_connectivity(axs[3], None, None)
+
+    axs[4].set_title('PV <=> CC Soma')
+    visualise_synapse_group_connectivity(axs[4], conn.get("PV_CCsoma"), conn.get("CCsoma_PV"))
+
+    axs[5].set_title('PV =/= CC Dendrite')
+    #     visualise_synapse_group_connectivity(axs[5], None, None)
+
+
+def visualise_CS_connectivity(axs, conn):
+    axs[0].set_title('CS Soma <=> SST')
+    visualise_synapse_group_connectivity(axs[0], conn.get("CSsoma_SST"), conn.get("SST_CSsoma"))
+
+    axs[1].set_title('CS Soma <=> PV')
+    visualise_synapse_group_connectivity(axs[1], conn.get("CSsoma_PV"), conn.get("PV_CSsoma"))
+
+    axs[2].set_title('CS Soma <=> CS Soma')
+    visualise_synapse_group_connectivity(axs[2], conn.get("CSsoma_CSsoma"), conn.get("CSsoma_CSsoma"))
+
+    axs[3].set_title('CS Soma =/= CS Dendrite')
+    #     visualise_synapse_group_connectivity(axs[3], None, None)
+
+    axs[4].set_title('CS Soma =/= CC Soma')
+    #     visualise_synapse_group_connectivity(axs[4], None, None)
+
+    axs[5].set_title('CS Soma =/= CC Dendrite')
+    #     visualise_synapse_group_connectivity(axs[5], None, None)
+
+
+def visualise_CC_connectivity(axs, conn):
+    axs[0].set_title('CC Soma <=> SST')
+    visualise_synapse_group_connectivity(axs[0], conn.get("CCsoma_SST"), conn.get("SST_CCsoma"))
+
+    axs[1].set_title('CC Soma <=> PV')
+    visualise_synapse_group_connectivity(axs[1], conn.get("CCsoma_PV"), conn.get("PV_CCsoma"))
+
+    axs[2].set_title('CC Soma <=> CS Soma')
+    visualise_synapse_group_connectivity(axs[2], conn.get("CCsoma_CCsoma"), conn.get("CCsoma_CCsoma"))
+
+    axs[3].set_title('CC Soma =/= CS Dendrite')
+    #     visualise_synapse_group_connectivity(axs[3], None, None)
+
+    axs[4].set_title('CC Soma =/= CC Soma')
+    #     visualise_synapse_group_connectivity(axs[4], None, None)
+
+    axs[5].set_title('CC Soma =/= CC Dendrite')
+    #     visualise_synapse_group_connectivity(axs[5], None, None)
+
+
+def plot_neuron_connectivity(connections, output_folder=None, file_name='neuron_connectivity'):
+    fig, axs = plt.subplots(4, 6, figsize=(24, 36))
+
+    visualise_SST_connectivity(axs[0], connections)
+    visualise_PV_connectivity(axs[1], connections)
+    visualise_CS_connectivity(axs[2], connections)
+    visualise_CC_connectivity(axs[3], connections)
+
+    if output_folder is not None:
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+
+        fig.savefig('%s/%s.pdf' % (output_folder, file_name), bbox_inches='tight')
+
+    plt.close(fig)
