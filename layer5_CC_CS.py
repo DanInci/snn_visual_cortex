@@ -18,7 +18,7 @@ def analyse_network_simulation(spike_monitors, state_monitors, connections, V_t,
 
     ### General analysis parameters
     time_frame = 0.1  # Time frame for computing equlibrium time
-    no_bins_firing_rates = 10 # Number of bins for firing rates historgram
+    no_bins_firing_rates = 10  # Number of bins for firing rates historgram
     no_bins_isi = 10  # Number of bins for interspike intervals historgram
 
     plot_only_from_equilibrium = True  # Plot graphs only from equilibrium time

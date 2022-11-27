@@ -1,5 +1,4 @@
 from brian2 import *
-from tqdm import tqdm
 import pandas as pd
 
 from scipy.signal import argrelextrema
@@ -8,7 +7,7 @@ from scipy.signal import argrelextrema
 def count_spikes_for_neuron_type(spike_mon, from_t=None, to_t=None):
     spike_counts = {}
 
-    for index in tqdm(spike_mon.spike_trains()):
+    for index in spike_mon.spike_trains():
         a = pd.Series(spike_mon.spike_trains()[index] / second)
 
         if from_t is not None and to_t is not None:
@@ -71,7 +70,7 @@ def compute_output_selectivity_for_neuron_type(spike_mon, from_t, to_t):
 def compute_interspike_intervals(spike_mon, from_t, to_t):
     by_neuron = []
 
-    for neuron_index in tqdm(spike_mon.spike_trains()):
+    for neuron_index in spike_mon.spike_trains():
         spikes_for_neuron = pd.Series(spike_mon.spike_trains()[neuron_index] / second)
         filterd_by_period = spikes_for_neuron.loc[lambda x: (x >= from_t) & (x <= to_t)]
 
@@ -118,7 +117,7 @@ def compute_burst_mask(spikes, maxISI):
 
 def compute_burst_trains(spike_mon, maxISI):
     burst_trains = {}
-    for neuron_index in tqdm(spike_mon.spike_trains()):
+    for neuron_index in spike_mon.spike_trains():
         burst_mask = compute_burst_mask(spike_mon.spike_trains()[neuron_index], maxISI)
         burst_trains[neuron_index] = burst_mask
 
