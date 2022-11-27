@@ -68,7 +68,7 @@ def analyse_network_simulation(spike_monitors, state_monitors, connections, V_t,
                 file_name='state_plot_PV')
 
     # Plot connectivity graph
-    plot_neuron_connectivity(connections, output_folder=output_folder, file_name='neuron_connectivity')
+    # plot_neuron_connectivity(connections, output_folder=output_folder, file_name='neuron_connectivity')
 
     results = {}
 

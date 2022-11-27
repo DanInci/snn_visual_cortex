@@ -154,3 +154,85 @@ def compute_burst_lengths_by_neuron_group(burst_trains):
         burst_lengths.extend(burst_lengths_by_neuron)
 
     return burst_lengths
+
+
+def distributionInput(a_data, b_data, spatialF, temporalF, orientation, spatialPhase, amplitude, T, steady_input, N):
+    """
+    Generates a moving bar as input to CS, CC, PV, SST.
+    Using the function from textbook theoretical neurosciences.
+    Turning the image into stimulus by converting the difference between that pixel over time and the
+    difference between the pixel and the overall backaground level of luminance.
+    Output: Stimulus to the L5 neuron
+    Steady_input: making a check to make sure the input is steady.
+    """
+
+    i = 0
+    inputs_p_all = []
+    N_indices = [[0, N[0]], [sum(N[:1]), sum(N[:2])], [sum(N[:2]), sum(N[:3])], [sum(N[:3]), sum(N)]]
+    for popu in N_indices:
+        inputs_p = []
+
+        if steady_input[i] > 0.5:
+            for t in range(T):
+                inputs_p.append(amplitude[i] * np.cos(
+                    spatialF * a_data[popu[0]:popu[1]] * np.cos(orientation) +
+                    spatialF * b_data[popu[0]:popu[1]] * np.sin(orientation) - spatialPhase)
+                                * np.cos(temporalF) + amplitude[i])
+            inputs_p = np.array(inputs_p)
+        else:
+            for t in range(T):
+                inputs_p.append(amplitude[i] * np.cos(
+                    spatialF * a_data[popu[0]:popu[1]] * np.cos(orientation) +
+                    spatialF * b_data[popu[0]:popu[1]] * np.sin(orientation) - spatialPhase)
+                                * np.cos(temporalF * t) + amplitude[i])
+            inputs_p = np.array(inputs_p)
+        i += 1
+        inputs_p_all.append(inputs_p)
+
+    inputs = np.concatenate((inputs_p_all), axis=1)
+
+    return inputs
+
+
+def calculate_pairwise_selectivity(input_1, input_2):
+    return np.abs(input_1 - input_2) / (input_1 + input_2)
+
+
+def calculate_selectivity(fire_rates):
+    """
+    Calculate mean and std of selectivity.
+    fire rates should contain a vector of size 4, containing fire rate measurements
+    for stimulus of 4 directions [0, 90, 180, 270] degrees
+    """
+    assert len(fire_rates) == 4
+
+    preferred_orientation_idx = np.argmax(fire_rates)  # get the index of the maximum firing rate
+
+    # fire rate of preferred stimulus
+    fire_rate_preferred = fire_rates[preferred_orientation_idx]
+
+    # average fire rate of preferred stimulus in both directions
+    fire_rate_preferred_orientation = np.mean([
+        fire_rates[preferred_orientation_idx],
+        fire_rates[(preferred_orientation_idx + 2) % 4]
+    ])
+
+    # fire rate of orthogonal stimulus in both directions
+    fire_rate_orthogonal_orientation = np.mean([
+        fire_rates[(preferred_orientation_idx + 1) % 4],
+        fire_rates[(preferred_orientation_idx + 3) % 4]
+    ])
+
+    # fire rate of opposite stimulus
+    fire_rate_opposite = fire_rates[(preferred_orientation_idx + 2) % 4]
+
+    orientation_selectivity = calculate_pairwise_selectivity(fire_rate_preferred_orientation, fire_rate_orthogonal_orientation)
+    orientation_selectivity_paper = calculate_pairwise_selectivity(fire_rate_preferred, fire_rate_orthogonal_orientation)
+    direction_selectivity = calculate_pairwise_selectivity(fire_rate_preferred, fire_rate_opposite)
+
+    selectivity = {}
+    selectivity["orientation"] = np.around(orientation_selectivity, decimals=3)
+    selectivity["orientation_paper"] = np.around(orientation_selectivity_paper, decimals=3)
+    selectivity["direction"] = np.around(direction_selectivity, decimals=3)
+
+    return selectivity
