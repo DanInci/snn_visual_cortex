@@ -17,12 +17,11 @@ def analyse_network_simulation(spike_monitors, state_monitors, connections, V_t,
     state_mon_sst, state_mon_pv, state_mon_cs, state_mon_cc = state_monitors
 
     ### General analysis parameters
-    time_frame = 0.1  # Time frame for computing equlibrium time
     no_bins_firing_rates = 10  # Number of bins for firing rates historgram
     no_bins_isi = 10  # Number of bins for interspike intervals historgram
 
     plot_only_from_equilibrium = True  # Plot graphs only from equilibrium time
-    recompute_equilibrium = False  # If true, will try and recompute equilibirum time, if not will use `default_equilibrium_time`
+    recompute_equilibrium = True  # If true, will try and recompute equilibirum time, if not will use `default_equilibrium_time`
     default_equilibrium_t = 5*second  # Default equilibirium time, will be used in case `recompute_equilibrium` is False. Should be set based on previous simulation results
 
     ################################################################################
@@ -32,9 +31,9 @@ def analyse_network_simulation(spike_monitors, state_monitors, connections, V_t,
     if recompute_equilibrium:
         equilibrium_times = []
         for idx, spike_mon in enumerate([spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv]):
-            t, firing_rate = hlp.compute_equilibrium_for_neuron_type(spike_mon, time_frame)
+            t, firing_rate = hlp.compute_equilibrium_for_neuron_type(spike_mon)
             if firing_rate is not None:
-                print(f"Found for {index_to_ntype_dict[idx]} neurons")
+                print(f"- Equilibrium found for {index_to_ntype_dict[idx]} neurons")
 
             equilibrium_times.append(t)
 
@@ -150,7 +149,7 @@ def analyse_network_simulation(spike_monitors, state_monitors, connections, V_t,
     return results
 
 
-def run_simulation_for_input(params, seed_val=12345, simulate_sst_target_soma=False, use_synaptic_probabilities=True, base_output_folder=None):
+def run_simulation_for_input(params, simulate_sst_target_soma, use_synaptic_probabilities, seed_val=12345, base_output_folder=None):
     p = Struct(**params)
 
     start_scope()

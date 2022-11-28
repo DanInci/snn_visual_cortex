@@ -7,7 +7,7 @@ N_CS = 400
 
 default = {
     ### General parameters
-    "duration": 10 * second,  # Total simulation time
+    "duration": 3 * second,  # Total simulation time
     "sim_dt":   0.1 * ms,  # Integrator/sampling step
 
     "N_sst": N_SST,  # Number of SST neurons (inhibitory)
