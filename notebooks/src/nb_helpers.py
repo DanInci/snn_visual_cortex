@@ -25,7 +25,7 @@ def compute_firing_rate_for_neuron_type(spike_mon, from_t, to_t):
     return spikes_for_i / duration
 
 
-def compute_equilibrium_for_neuron_type(spike_mon, time_frame):
+def compute_equilibrium_for_neuron_type(spike_mon, time_frame=0.05, tol=0.001):
     t = 0
     last_spike_t = spike_mon.t[-1] / second if len(spike_mon.t) > 0 else t
 
@@ -33,8 +33,7 @@ def compute_equilibrium_for_neuron_type(spike_mon, time_frame):
     while t < last_spike_t:
         firing_rate = compute_firing_rate_for_neuron_type(spike_mon, t, t + time_frame)
 
-        if current_firing_rate is not None and firing_rate.equals(current_firing_rate) and current_firing_rate[
-            current_firing_rate == 0].size == 0:
+        if current_firing_rate is not None and (np.mean(firing_rate) - np.mean(current_firing_rate) < tol):
             current_firing_rate = firing_rate
             break
         else:
