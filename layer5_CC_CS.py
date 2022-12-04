@@ -1,7 +1,6 @@
 from brian2 import *
 from plotting import *
 from equations import *
-from parameters import default as default_params
 import copy
 
 import helpers as hlp
@@ -21,8 +20,8 @@ def analyse_network_simulation(spike_monitors, state_monitors, connections, V_t,
     no_bins_isi = 10  # Number of bins for interspike intervals historgram
 
     plot_only_from_equilibrium = True  # Plot graphs only from equilibrium time
-    recompute_equilibrium = True  # If true, will try and recompute equilibirum time, if not will use `default_equilibrium_time`
-    default_equilibrium_t = 5*second  # Default equilibirium time, will be used in case `recompute_equilibrium` is False. Should be set based on previous simulation results
+    recompute_equilibrium = False  # If true, will try and recompute equilibirum time, if not will use `default_equilibrium_time`
+    default_equilibrium_t = 0.2*second  # Default equilibirium time, will be used in case `recompute_equilibrium` is False. Should be set based on previous simulation results
 
     ################################################################################
     # Analysis and plotting
@@ -39,18 +38,16 @@ def analyse_network_simulation(spike_monitors, state_monitors, connections, V_t,
 
         equilibrium_t = max(equilibrium_times) * second
         if equilibrium_t < sim_duration:
-            print(f"Equilibrium for all neurons start at: {equilibrium_t}")
+            print(f"* Equilibrium for all neurons start at: {equilibrium_t}")
         else:
             print(f"WARNING: Equilibrium was not found during the duration of the simulation")
     else:
-        print(f"Skipping recalculating equilibrium time. Using default equilibrium time={default_equilibrium_t}")
+        print(f"* Skipping recalculating equilibrium time. Using default equilibrium time={default_equilibrium_t}")
         equilibrium_t = default_equilibrium_t
 
     # Only compute properties of the system from equilibrium time to end simulation time
     from_t = equilibrium_t
     to_t = sim_duration
-
-    print("Plotting results from equilibrium ... ")
 
     raster_from_t = from_t if plot_only_from_equilibrium else 0
     raster_to_t = min(raster_from_t + 3 * second, sim_duration)
@@ -505,7 +502,7 @@ def run_simulation_for_input(params, simulate_sst_target_soma, use_synaptic_prob
     return results_without_sst_soma, results_with_sst_soma
 
 
-def simulate_with_different_inputs(params, simulate_sst_target_soma=True, seed_val=12345):
+def run_complete_simulation(params, simulate_sst_target_soma=True, seed_val=12345):
     p = Struct(**params)
 
     N = [p.N_cs, p.N_cc, p.N_sst, p.N_pv]
@@ -524,7 +521,7 @@ def simulate_with_different_inputs(params, simulate_sst_target_soma=True, seed_v
     spatial_phase = 1  # TODO What exactly does `spatial_phase` do?
     tsteps = int(p.duration / p.sim_dt)
 
-    ################## iterate through different inputs ##################
+    ################## iterate through different input angles ##################
     results_with_sst_soma = []
     results_without_sst_soma = []
     for degree in degrees:
@@ -572,6 +569,3 @@ def simulate_with_different_inputs(params, simulate_sst_target_soma=True, seed_v
                                        file_name='agg_results_with_sst_soma.json')
 
     plot_selectivity_comparison(agg_results_without_sst=agg_results_without_sst_to_soma, agg_results_with_sst=agg_results_with_sst_to_soma, output_folder='output')
-
-
-simulate_with_different_inputs(default_params, simulate_sst_target_soma=True, seed_val=12345)

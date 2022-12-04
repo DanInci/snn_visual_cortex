@@ -30,17 +30,21 @@ def plot_raster(spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv, from_t=
     N_sst = len(spike_mon_sst.count)
     N_pv = len(spike_mon_pv.count)
     N = N_cs + N_cc + N_sst + N_pv
-    ax1.eventplot(spike_mon_cs.i[:, np.newaxis], lineoffsets=spike_mon_cs.t / ms, orientation='vertical', colors='b',
-              linewidths=2)
-    # ax1.axhline(N_cs - 1/2, lw=0.5, color='k')
-    ax1.eventplot((N_cs + spike_mon_cc.i)[:, np.newaxis], lineoffsets=spike_mon_cc.t / ms, orientation='vertical',
-              colors='r', linewidths=2)
-    # ax1.axhline(N_cs + N_cc - 1/2, lw=0.5, color='k')
-    ax1.eventplot(((N_cs + N_cc) + spike_mon_sst.i)[:, np.newaxis], lineoffsets=spike_mon_sst.t / ms,
-              orientation='vertical', colors='g', linewidths=2)
-    # ax1.axhline(N_cs + N_cc + N_sst - 1/2, lw=0.5, color='k')
-    ax1.eventplot(((N_cs + N_cc + N_sst) + spike_mon_pv.i)[:, np.newaxis], lineoffsets=spike_mon_pv.t / ms,
-              orientation='vertical', colors='y', linewidths=2)
+
+    if len(spike_mon_cs.i[:, np.newaxis]) > 0:
+        ax1.eventplot(spike_mon_cs.i[:, np.newaxis], lineoffsets=spike_mon_cs.t / ms, orientation='vertical', colors='b', linewidths=2)
+        # ax1.axhline(N_cs - 1/2, lw=0.5, color='k')
+
+    if len((N_cs + spike_mon_cc.i)[:, np.newaxis]) > 0:
+        ax1.eventplot((N_cs + spike_mon_cc.i)[:, np.newaxis], lineoffsets=spike_mon_cc.t / ms, orientation='vertical', colors='r', linewidths=2)
+        # ax1.axhline(N_cs + N_cc - 1/2, lw=0.5, color='k')
+
+    if len(((N_cs + N_cc) + spike_mon_sst.i)[:, np.newaxis]):
+        ax1.eventplot(((N_cs + N_cc) + spike_mon_sst.i)[:, np.newaxis], lineoffsets=spike_mon_sst.t / ms, orientation='vertical', colors='g', linewidths=2)
+        # ax1.axhline(N_cs + N_cc + N_sst - 1/2, lw=0.5, color='k')
+
+    if len(((N_cs + N_cc + N_sst) + spike_mon_pv.i)[:, np.newaxis]) > 0:
+        ax1.eventplot(((N_cs + N_cc + N_sst) + spike_mon_pv.i)[:, np.newaxis], lineoffsets=spike_mon_pv.t / ms, orientation='vertical', colors='y', linewidths=2)
 
     custom_handles = [Line2D([0], [0], color='y', lw=1, label='PV'),
                       Line2D([0], [0], color='g', lw=1, label='SST'),

@@ -1,9 +1,9 @@
 from brian2 import *
 
-N_SST = 100
-N_PV = 100
-N_CC = 400
-N_CS = 400
+N_SST = 34
+N_PV = 46
+N_CC = 275
+N_CS = 45
 
 default = {
     ### General parameters
@@ -90,10 +90,10 @@ default = {
     "pPV_SST":   0.14,
 
     ### Input amplitude & steady state
-    "I_sst_amp":    50,
+    "I_sst_amp":    10,
     "I_pv_amp":     50,
-    "I_cc_amp":     50,
-    "I_cs_amp":     50,
+    "I_cc_amp":     500,
+    "I_cs_amp":     100,
 
     "I_sst_steady":  0,
     "I_pv_steady":   0,
