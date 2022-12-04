@@ -564,14 +564,14 @@ def simulate_with_different_inputs(params, simulate_sst_target_soma=True, seed_v
                                    file_name='agg_results_without_sst_soma.json')
 
     # SST -> SOMA connection present
+    agg_results_with_sst_to_soma = None
     if simulate_sst_target_soma:
         agg_results_with_sst_to_soma = hlp.calculate_aggregate_results(results_with_sst_soma)
         hlp.save_agg_results_to_folder(agg_results_with_sst_to_soma,
                                        output_folder='output',
                                        file_name='agg_results_with_sst_soma.json')
 
-        plot_selectivity_comparison(agg_results_with_sst=agg_results_with_sst_to_soma,
-                                    agg_results_without_sst=agg_results_without_sst_to_soma, output_folder='output')
+    plot_selectivity_comparison(agg_results_without_sst=agg_results_without_sst_to_soma, agg_results_with_sst=agg_results_with_sst_to_soma, output_folder='output')
 
 
 simulate_with_different_inputs(default_params, simulate_sst_target_soma=True, seed_val=12345)
