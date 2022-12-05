@@ -1,5 +1,4 @@
 from brian2 import *
-from tqdm import tqdm
 import pandas as pd
 import json
 import os
@@ -33,7 +32,7 @@ def bin(spiketime, dt):
 def count_spikes_for_neuron_type(spike_mon, from_t=None, to_t=None):
     spike_counts = {}
 
-    for index in tqdm(spike_mon.spike_trains()):
+    for index in spike_mon.spike_trains():
         a = pd.Series(spike_mon.spike_trains()[index] / second)
 
         if from_t is not None and to_t is not None:
@@ -55,7 +54,7 @@ def compute_firing_rate_for_neuron_type(spike_mon, from_t, to_t):
 def compute_interspike_intervals(spike_mon, from_t, to_t):
     by_neuron = []
 
-    for neuron_index in tqdm(spike_mon.spike_trains()):
+    for neuron_index in spike_mon.spike_trains():
         spikes_for_neuron = pd.Series(spike_mon.spike_trains()[neuron_index] / second)
         filterd_by_period = spikes_for_neuron.loc[lambda x: (x >= from_t) & (x <= to_t)]
 
@@ -110,7 +109,7 @@ def compute_autocorr_struct(interspike_intervals, no_bins):
     return autocorr_sst
 
 
-def compute_equilibrium_for_neuron_type(spike_mon, time_frame):
+def compute_equilibrium_for_neuron_type(spike_mon, time_frame=0.05, tol=0.001):
     t = 0
     last_spike_t = spike_mon.t[-1] / second if len(spike_mon.t) > 0 else t
 
@@ -118,8 +117,7 @@ def compute_equilibrium_for_neuron_type(spike_mon, time_frame):
     while t < last_spike_t:
         firing_rate = compute_firing_rate_for_neuron_type(spike_mon, t, t + time_frame)
 
-        if current_firing_rate is not None and firing_rate.equals(current_firing_rate) and current_firing_rate[
-            current_firing_rate == 0].size == 0:
+        if current_firing_rate is not None and (np.mean(firing_rate) - np.mean(current_firing_rate) < tol):
             current_firing_rate = firing_rate
             break
         else:
@@ -143,7 +141,7 @@ def compute_burst_mask(spikes, maxISI):
 
 def compute_burst_trains(spike_mon, maxISI):
     burst_trains = {}
-    for neuron_index in tqdm(spike_mon.spike_trains()):
+    for neuron_index in spike_mon.spike_trains():
         burst_mask = compute_burst_mask(spike_mon.spike_trains()[neuron_index], maxISI)
         burst_trains[neuron_index] = burst_mask
 
@@ -245,7 +243,7 @@ def distributionInput(a_data, b_data, spatialF, temporalF, orientation, spatialP
     return inputs
 
 
-def compute_selectivity(input_1, input_2):
+def calculate_pairwise_selectivity(input_1, input_2):
     return np.abs(input_1 - input_2) / (input_1 + input_2)
 
 
@@ -277,9 +275,9 @@ def calculate_selectivity(fire_rates):
     # fire rate of opposite stimulus
     fire_rate_opposite = fire_rates[(preferred_orientation_idx + 2) % 4]
 
-    orientation_selectivity = compute_selectivity(fire_rate_preferred_orientation, fire_rate_orthogonal_orientation)
-    orientation_selectivity_paper = compute_selectivity(fire_rate_preferred, fire_rate_orthogonal_orientation)
-    direction_selectivity = compute_selectivity(fire_rate_preferred, fire_rate_opposite)
+    orientation_selectivity = calculate_pairwise_selectivity(fire_rate_preferred_orientation, fire_rate_orthogonal_orientation)
+    orientation_selectivity_paper = calculate_pairwise_selectivity(fire_rate_preferred, fire_rate_orthogonal_orientation)
+    direction_selectivity = calculate_pairwise_selectivity(fire_rate_preferred, fire_rate_opposite)
 
     selectivity = {}
     selectivity["orientation"] = np.around(orientation_selectivity, decimals=3)
@@ -294,15 +292,24 @@ def calculate_aggregate_results(individual_results):
     agg_results["input_selectivity"] = 0.0  # TODO Calculate input selectivity
 
     fire_rates_CS = [np.mean(result["firing_rates_cs"]) for result in individual_results]
-    agg_results["output_selectivity_cs"] = calculate_selectivity(fire_rates_CS)
+    selectivity_CS = calculate_selectivity(fire_rates_CS)
+    agg_results["output_selectivity_cs"] = selectivity_CS
 
     fire_rates_CC = [np.mean(result["firing_rates_cc"]) for result in individual_results]
-    agg_results["output_selectivity_cc"] = calculate_selectivity(fire_rates_CC)
-
-    fire_rates_SST = [np.mean(result["firing_rates_sst"]) for result in individual_results]
-    agg_results["output_selectivity_sst"] = calculate_selectivity(fire_rates_SST)
+    selectivity_CC = calculate_selectivity(fire_rates_CC)
+    agg_results["output_selectivity_cc"] = selectivity_CC
 
     fire_rates_PV = [np.mean(result["firing_rates_pv"]) for result in individual_results]
-    agg_results["output_selectivity_pv"] = calculate_selectivity(fire_rates_PV)
+    selectivity_PV = calculate_selectivity(fire_rates_PV)
+    agg_results["output_selectivity_pv"] = selectivity_PV
+
+    fire_rates_SST = [np.mean(result["firing_rates_sst"]) for result in individual_results]
+    selectivity_SST = calculate_selectivity(fire_rates_SST)
+    agg_results["output_selectivity_sst"] = selectivity_SST
+
+    if selectivity_CC["orientation"] > 0.00001 and selectivity_CC["direction"] > 0.00001:
+        agg_results["os_rel"] = (selectivity_CS["orientation"] - selectivity_CC["orientation"]) / (selectivity_CS["orientation"] + selectivity_CC["orientation"])
+        agg_results["ds_rel"] = (selectivity_CS["direction"] - selectivity_CC["direction"]) / (selectivity_CS["direction"] + selectivity_CC["direction"])
+        agg_results["os_paper_rel"] = (selectivity_CS["orientation_paper"] - selectivity_CC["orientation_paper"]) / (selectivity_CS["orientation_paper"] + selectivity_CC["orientation_paper"])
 
     return agg_results
