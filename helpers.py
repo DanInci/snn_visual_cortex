@@ -294,18 +294,22 @@ def calculate_aggregate_results(individual_results):
     fire_rates_CS = [np.mean(result["firing_rates_cs"]) for result in individual_results]
     selectivity_CS = calculate_selectivity(fire_rates_CS)
     agg_results["output_selectivity_cs"] = selectivity_CS
+    agg_results['mean_fire_rate_cs'] = np.mean(fire_rates_CS)
 
     fire_rates_CC = [np.mean(result["firing_rates_cc"]) for result in individual_results]
     selectivity_CC = calculate_selectivity(fire_rates_CC)
     agg_results["output_selectivity_cc"] = selectivity_CC
+    agg_results['mean_fire_rate_cc'] = np.mean(fire_rates_CC)
 
     fire_rates_PV = [np.mean(result["firing_rates_pv"]) for result in individual_results]
     selectivity_PV = calculate_selectivity(fire_rates_PV)
     agg_results["output_selectivity_pv"] = selectivity_PV
+    agg_results['mean_fire_rate_pv'] = np.mean(fire_rates_PV)
 
     fire_rates_SST = [np.mean(result["firing_rates_sst"]) for result in individual_results]
     selectivity_SST = calculate_selectivity(fire_rates_SST)
     agg_results["output_selectivity_sst"] = selectivity_SST
+    agg_results['mean_fire_rate_sst'] = np.mean(fire_rates_SST)
 
     if selectivity_CC["orientation"] > 0.00001 and selectivity_CC["direction"] > 0.00001:
         agg_results["os_rel"] = (selectivity_CS["orientation"] - selectivity_CC["orientation"]) / (selectivity_CS["orientation"] + selectivity_CC["orientation"])

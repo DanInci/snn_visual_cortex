@@ -90,9 +90,9 @@ default = {
     "pPV_SST":   0.14,
 
     ### Input amplitude & steady state
-    "I_sst_amp":    10,
+    "I_sst_amp":    50,
     "I_pv_amp":     50,
-    "I_cc_amp":     500,
+    "I_cc_amp":     200,
     "I_cs_amp":     100,
 
     "I_sst_steady":  0,

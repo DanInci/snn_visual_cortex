@@ -59,10 +59,10 @@ def run_input_amplitude_simulation(params, input_amplitudes, seed_val=12345):
 
 
 def test_input_amplitudes(params, csv_writer=None, seed_val=12345):
-    input_cs_amplitudes = [10, 50, 100, 500]
-    input_cc_amplitudes = [10, 50, 100, 500]
-    input_sst_amplitudes = [10, 50, 100, 500]
-    input_pv_amplitudes = [10, 50, 100, 500]
+    input_cs_amplitudes = [100]
+    input_cc_amplitudes = [100, 200, 300]
+    input_sst_amplitudes = [10, 25, 50, 75, 100]
+    input_pv_amplitudes = [50]
 
     for input_cs in input_cs_amplitudes:
         for input_cc in input_cc_amplitudes:
@@ -73,7 +73,9 @@ def test_input_amplitudes(params, csv_writer=None, seed_val=12345):
 
                     results = run_input_amplitude_simulation(params, input_amplitudes, seed_val)
 
-                    row = [input_cs, input_cc, input_sst, input_pv, results.get("os_rel"), results.get("ds_rel"), results.get("os_paper_rel")]
+                    row = [input_cs, input_cc, input_sst, input_pv,
+                           results["mean_fire_rate_cs"], results["mean_fire_rate_cc"], results["mean_fire_rate_sst"], results["mean_fire_rate_pv"],
+                           results.get("os_rel"), results.get("ds_rel"), results.get("os_paper_rel")]
 
                     # write into csv file
                     if csv_writer:
@@ -86,7 +88,9 @@ time_id = now.strftime("%m:%d:%Y_%H:%M:%S")
 output_folder = 'data'
 output_file = f'{output_folder}/{sim_name}_{time_id}.csv'
 
-header_row = ['input_cs', 'input_cc', 'input_sst', 'input_pv', 'os_rel', 'ds_rel', 'os_paper_rel']
+header_row = ['input_cs', 'input_cc', 'input_sst', 'input_pv',
+              'fire_rate_cs', 'fire_rate_cc', 'fire_rate_sst', 'fire_rate_pv',
+              'os_rel', 'ds_rel', 'os_paper_rel']
 
 if not os.path.exists(output_folder):
     os.makedirs(output_folder)
