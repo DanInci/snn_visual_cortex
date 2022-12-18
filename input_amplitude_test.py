@@ -47,7 +47,10 @@ def run_input_amplitude_simulation(params, input_amplitudes, seed_val=12345):
         params_with_input["I_ext_pv"] = inputs[:, p.N_cs + p.N_cc + p.N_sst:]
 
         # Only simulate for SST -> SOMA connection NOT present
-        result_without_sst_soma, _ = run_simulation_for_input(params_with_input, seed_val=seed_val, simulate_sst_target_soma=False, use_synaptic_probabilities=True)
+        params_with_input["pSST_CS_soma"] = [0]  # all probability goes to CS dendrite
+        params_with_input["pSST_CC_soma"] = [0]  # all probability goes to CC dendrite
+
+        result_without_sst_soma, _ = run_simulation_for_input(params_with_input, seed_val=seed_val, use_synaptic_probabilities=True)
         results_without_sst_soma.append(result_without_sst_soma)
 
 

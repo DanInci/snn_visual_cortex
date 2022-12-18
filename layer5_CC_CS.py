@@ -146,7 +146,7 @@ def analyse_network_simulation(spike_monitors, state_monitors, connections, V_t,
     return results
 
 
-def run_simulation_for_input(params, simulate_sst_target_soma, use_synaptic_probabilities, seed_val=12345, base_output_folder=None):
+def run_simulation_for_input(params, use_synaptic_probabilities, seed_val=12345, base_output_folder=None):
     p = Struct(**params)
 
     start_scope()
@@ -210,6 +210,14 @@ def run_simulation_for_input(params, simulate_sst_target_soma, use_synaptic_prob
     N_pv = p.N_pv  # Number of PV neurons (inhibitory)
     N_cc = p.N_cc  # Number of CC neurons (excitatory)
     N_cs = p.N_cs  # Number of CS neurons (excitatory)
+
+    pSST_CS_soma_vector = p.pSST_CS_soma
+    assert len(pSST_CS_soma_vector) <= 4
+
+    pSST_CC_soma_vector = p.pSST_CC_soma
+    assert len(pSST_CC_soma_vector) <= 4
+
+    assert len(pSST_CS_soma_vector) == len(pSST_CC_soma_vector)
 
     ################################################################################
     # Define neurons
@@ -354,110 +362,46 @@ def run_simulation_for_input(params, simulate_sst_target_soma, use_synaptic_prob
 
     defaultclock.dt = sim_dt
 
-    # ##############################################################################
-    # Add extra synapses (Without SST->Soma)
-    # ##############################################################################
+    result_0 = None
+    if len(pSST_CS_soma_vector) >= 1:
+        p_SST_CS_soma = pSST_CS_soma_vector[0]
+        p_SST_CC_soma = pSST_CC_soma_vector[0]
 
-    # SST => PYR soma
-    ## target CS dendrite
-    conn_SST_CSdendrite = Synapses(sst_neurons, cs_neurons, model='w: 1', on_pre='g_id+=w*nS',
-                                   name='SST_CSdendrite')  # inhibitory
-    conn_SST_CSdendrite.connect(p=p.pSST_CS*p.pSST_CS_weight if use_synaptic_probabilities else 1)
-    conn_SST_CSdendrite.w = p.wSST_CS
-    connections["SST_CSdendrite"] = conn_SST_CSdendrite
-
-    ## target CC dendrite
-    conn_SST_CCdendrite = Synapses(sst_neurons, cc_neurons, model='w: 1', on_pre='g_id+=w*nS',
-                                   name='SST_CCdendrite')  # inhibitory
-    conn_SST_CCdendrite.connect(p=p.pSST_CC*p.pSST_CC_weight if use_synaptic_probabilities else 1)
-    conn_SST_CCdendrite.w = p.wSST_CC
-    connections["SST_CCdendrite"] = conn_SST_CCdendrite
-
-    extra_connections = [conn_SST_CSdendrite, conn_SST_CCdendrite]
-
-    # ##############################################################################
-    # Define Monitors (Without SST->Soma)
-    # ##############################################################################
-
-    # Record spikes of different neuron groups
-    spike_mon_sst = SpikeMonitor(sst_neurons)
-    spike_mon_pv = SpikeMonitor(pv_neurons)
-    spike_mon_cs = SpikeMonitor(cs_neurons)
-    spike_mon_cc = SpikeMonitor(cc_neurons)
-
-    spike_monitors = [spike_mon_sst, spike_mon_pv, spike_mon_cs, spike_mon_cc]
-
-    # Record conductances and membrane potential of neuron ni
-    state_mon_sst = StateMonitor(sst_neurons, ['v', 'g_e', 'g_i'], record=[0])
-    state_mon_pv = StateMonitor(pv_neurons, ['v', 'g_e', 'g_i'], record=[0])
-    state_mon_cs = StateMonitor(cs_neurons, ['v_s', 'v_d', 'g_es', 'g_is', 'g_ed', 'g_id'], record=[0])
-    state_mon_cc = StateMonitor(cc_neurons, ['v_s', 'v_d', 'g_es', 'g_is', 'g_ed', 'g_id'], record=[0])
-
-    state_monitors = [state_mon_sst, state_mon_pv, state_mon_cs, state_mon_cc]
-
-    # ##############################################################################
-    # Run Network (Without SST->Soma)
-    # ##############################################################################
-
-    print('* Run network simulation WITHOUT SST->Soma')
-    network.restore('initialized')
-
-    # Add extras to network
-    network.add(extra_connections)
-    network.add(spike_monitors)
-    network.add(state_monitors)
-
-    network.run(sim_duration, report='text')
-
-    output_folder_without_sst_soma = f'{base_output_folder}/without_sst_soma' if base_output_folder else None
-    results_without_sst_soma = analyse_network_simulation(spike_monitors, state_monitors, connections,
-                                         V_t=V_t, sim_duration=sim_duration,
-                                         output_folder=output_folder_without_sst_soma)
-
-    # Cleanup extras from network
-    network.remove(extra_connections)
-    network.remove(spike_monitors)
-    network.remove(state_monitors)
-
-    results_with_sst_soma = None
-    if simulate_sst_target_soma:
         # ##############################################################################
-        # Add extra synapses (WithSST->Soma)
+        # Add extra synapses (pSST_CS/CC_soma - case 0)
         # ##############################################################################
 
-        # SST => PYR soma
-        ## target CS soma
         conn_SST_CSsoma = Synapses(sst_neurons, cs_neurons, model='w: 1', on_pre='g_is+=w*nS',
                                    name='SST_CSsoma')  # inhibitory (optional connection)
-        conn_SST_CSsoma.connect(p=p.pSST_CS*p.pSST_CS_weight / 2 if use_synaptic_probabilities else 1)  # inhibitory (optional connection)
+        conn_SST_CSsoma.connect(p=p.pSST_CS*p.pSST_CS_weight*p_SST_CS_soma if use_synaptic_probabilities else 1)  # inhibitory (optional connection)
         conn_SST_CSsoma.w = p.wSST_CS
         connections["SST_CSsoma"] = conn_SST_CSsoma
 
         ## target CS dendrite
         conn_SST_CSdendrite = Synapses(sst_neurons, cs_neurons, model='w: 1', on_pre='g_id+=w*nS',
                                        name='SST_CSdendrite')  # inhibitory
-        conn_SST_CSdendrite.connect(p=p.pSST_CS*p.pSST_CS_weight/2 if use_synaptic_probabilities else 1)
+        conn_SST_CSdendrite.connect(p=p.pSST_CS*p.pSST_CS_weight*(1-p_SST_CS_soma) if use_synaptic_probabilities else 1)
         conn_SST_CSdendrite.w = p.wSST_CS
         connections["SST_CSdendrite"] = conn_SST_CSdendrite
 
         ## target CC soma
         conn_SST_CCsoma = Synapses(sst_neurons, cc_neurons, model='w: 1', on_pre='g_is+=w*nS',
                                    name='SST_CCsoma')  # inhibitory (optional connection)
-        conn_SST_CCsoma.connect(p=p.pSST_CC*p.pSST_CC_weight / 2 if use_synaptic_probabilities else 1)  # inhibitory (optional connection)
+        conn_SST_CCsoma.connect(p=p.pSST_CC*p.pSST_CC_weight*p_SST_CC_soma if use_synaptic_probabilities else 1)  # inhibitory (optional connection)
         conn_SST_CCsoma.w = p.wSST_CC
         connections["SST_CCsoma"] = conn_SST_CCsoma
 
         ## target CC dendrite
         conn_SST_CCdendrite = Synapses(sst_neurons, cc_neurons, model='w: 1', on_pre='g_id+=w*nS',
                                        name='SST_CCdendrite')  # inhibitory
-        conn_SST_CCdendrite.connect(p=p.pSST_CC*p.pSST_CC_weight/2 if use_synaptic_probabilities else 1)
+        conn_SST_CCdendrite.connect(p=p.pSST_CC*p.pSST_CC_weight*(1-p_SST_CC_soma) if use_synaptic_probabilities else 1)
         conn_SST_CCdendrite.w = p.wSST_CC
         connections["SST_CCdendrite"] = conn_SST_CCdendrite
 
         extra_connections = [conn_SST_CSsoma, conn_SST_CSdendrite, conn_SST_CCsoma, conn_SST_CCdendrite]
 
         # ##############################################################################
-        # Define Monitors (With SST->Soma)
+        # Define Monitors (pSST_CS/CC_soma - case 0)
         # ##############################################################################
 
         # Record spikes of different neuron groups
@@ -468,7 +412,7 @@ def run_simulation_for_input(params, simulate_sst_target_soma, use_synaptic_prob
 
         spike_monitors = [spike_mon_sst, spike_mon_pv, spike_mon_cs, spike_mon_cc]
 
-        # Record conductances and membrane potential of neuron ni
+        # Record conductances and membrane potential of neuron groups
         state_mon_sst = StateMonitor(sst_neurons, ['v', 'g_e', 'g_i'], record=[0])
         state_mon_pv = StateMonitor(pv_neurons, ['v', 'g_e', 'g_i'], record=[0])
         state_mon_cs = StateMonitor(cs_neurons, ['v_s', 'v_d', 'g_es', 'g_is', 'g_ed', 'g_id'], record=[0])
@@ -477,10 +421,10 @@ def run_simulation_for_input(params, simulate_sst_target_soma, use_synaptic_prob
         state_monitors = [state_mon_sst, state_mon_pv, state_mon_cs, state_mon_cc]
 
         # ##############################################################################
-        # Run Network (With SST->Soma)
+        # Run Network (pSST_CS/CC_soma - case 0)
         # ##############################################################################
 
-        print('* Run network simulation WITH SST->Soma')
+        print('* Run network simulation (pSST_CS/CC_soma - case 0)')
         network.restore('initialized')
 
         # Add extras to network
@@ -490,19 +434,274 @@ def run_simulation_for_input(params, simulate_sst_target_soma, use_synaptic_prob
 
         network.run(sim_duration, report='text')
 
-        output_folder_with_sst_soma = f'{base_output_folder}/with_sst_soma' if base_output_folder else None
-        results_with_sst_soma = analyse_network_simulation(spike_monitors, state_monitors, connections,
-                                                              V_t=V_t, sim_duration=sim_duration,
-                                                              output_folder=output_folder_with_sst_soma)
+        output_folder_0 = f'{base_output_folder}/sst_soma_{p_SST_CS_soma}_{p_SST_CC_soma}' if base_output_folder else None
+        result_0 = analyse_network_simulation(spike_monitors, state_monitors, connections,
+                                             V_t=V_t, sim_duration=sim_duration,
+                                             output_folder=output_folder_0)
+
         # Cleanup extras from network
         network.remove(extra_connections)
         network.remove(spike_monitors)
         network.remove(state_monitors)
 
-    return results_without_sst_soma, results_with_sst_soma
+    result_1 = None
+    if len(pSST_CS_soma_vector) >= 2:
+        p_SST_CS_soma = pSST_CS_soma_vector[1]
+        p_SST_CC_soma = pSST_CC_soma_vector[1]
+        # ##############################################################################
+        # Add extra synapses (pSST_CS/CC_soma - case 1)
+        # ##############################################################################
+
+        # SST => PYR soma
+        ## target CS soma
+        conn_SST_CSsoma = Synapses(sst_neurons, cs_neurons, model='w: 1', on_pre='g_is+=w*nS',
+                                   name='SST_CSsoma')  # inhibitory (optional connection)
+        conn_SST_CSsoma.connect(p=p.pSST_CS*p.pSST_CS_weight*p_SST_CS_soma if use_synaptic_probabilities else 1)  # inhibitory (optional connection)
+        conn_SST_CSsoma.w = p.wSST_CS
+        connections["SST_CSsoma"] = conn_SST_CSsoma
+
+        ## target CS dendrite
+        conn_SST_CSdendrite = Synapses(sst_neurons, cs_neurons, model='w: 1', on_pre='g_id+=w*nS',
+                                       name='SST_CSdendrite')  # inhibitory
+        conn_SST_CSdendrite.connect(p=p.pSST_CS*p.pSST_CS_weight*(1-p_SST_CS_soma) if use_synaptic_probabilities else 1)
+        conn_SST_CSdendrite.w = p.wSST_CS
+        connections["SST_CSdendrite"] = conn_SST_CSdendrite
+
+        ## target CC soma
+        conn_SST_CCsoma = Synapses(sst_neurons, cc_neurons, model='w: 1', on_pre='g_is+=w*nS',
+                                   name='SST_CCsoma')  # inhibitory (optional connection)
+        conn_SST_CCsoma.connect(p=p.pSST_CC*p.pSST_CC_weight*p_SST_CC_soma if use_synaptic_probabilities else 1)  # inhibitory (optional connection)
+        conn_SST_CCsoma.w = p.wSST_CC
+        connections["SST_CCsoma"] = conn_SST_CCsoma
+
+        ## target CC dendrite
+        conn_SST_CCdendrite = Synapses(sst_neurons, cc_neurons, model='w: 1', on_pre='g_id+=w*nS',
+                                       name='SST_CCdendrite')  # inhibitory
+        conn_SST_CCdendrite.connect(p=p.pSST_CC*p.pSST_CC_weight*(1-p_SST_CC_soma) if use_synaptic_probabilities else 1)
+        conn_SST_CCdendrite.w = p.wSST_CC
+        connections["SST_CCdendrite"] = conn_SST_CCdendrite
+
+        extra_connections = [conn_SST_CSsoma, conn_SST_CSdendrite, conn_SST_CCsoma, conn_SST_CCdendrite]
+
+        # ##############################################################################
+        # Define Monitors (pSST_CS/CC_soma - case 1)
+        # ##############################################################################
+
+        # Record spikes of different neuron groups
+        spike_mon_sst = SpikeMonitor(sst_neurons)
+        spike_mon_pv = SpikeMonitor(pv_neurons)
+        spike_mon_cs = SpikeMonitor(cs_neurons)
+        spike_mon_cc = SpikeMonitor(cc_neurons)
+
+        spike_monitors = [spike_mon_sst, spike_mon_pv, spike_mon_cs, spike_mon_cc]
+
+        # Record conductances and membrane potential of neuron groups
+        state_mon_sst = StateMonitor(sst_neurons, ['v', 'g_e', 'g_i'], record=[0])
+        state_mon_pv = StateMonitor(pv_neurons, ['v', 'g_e', 'g_i'], record=[0])
+        state_mon_cs = StateMonitor(cs_neurons, ['v_s', 'v_d', 'g_es', 'g_is', 'g_ed', 'g_id'], record=[0])
+        state_mon_cc = StateMonitor(cc_neurons, ['v_s', 'v_d', 'g_es', 'g_is', 'g_ed', 'g_id'], record=[0])
+
+        state_monitors = [state_mon_sst, state_mon_pv, state_mon_cs, state_mon_cc]
+
+        # ##############################################################################
+        # Run Network (pSST_CS/CC_soma - case 1)
+        # ##############################################################################
+
+        print('* Run network simulation (pSST_CS/CC_soma - case 1)')
+        network.restore('initialized')
+
+        # Add extras to network
+        network.add(extra_connections)
+        network.add(spike_monitors)
+        network.add(state_monitors)
+
+        network.run(sim_duration, report='text')
+
+        output_folder_1 = f'{base_output_folder}/sst_soma_{p_SST_CS_soma}_{p_SST_CC_soma}' if base_output_folder else None
+        result_1 = analyse_network_simulation(spike_monitors, state_monitors, connections,
+                                                              V_t=V_t, sim_duration=sim_duration,
+                                                              output_folder=output_folder_1)
+        # Cleanup extras from network
+        network.remove(extra_connections)
+        network.remove(spike_monitors)
+        network.remove(state_monitors)
+
+    result_2 = None
+    if len(pSST_CS_soma_vector) >= 3:
+        p_SST_CS_soma = pSST_CS_soma_vector[2]
+        p_SST_CC_soma = pSST_CC_soma_vector[2]
+
+        # ##############################################################################
+        # Add extra synapses (pSST_CS/CC_soma - case 2)
+        # ##############################################################################
+
+        conn_SST_CSsoma = Synapses(sst_neurons, cs_neurons, model='w: 1', on_pre='g_is+=w*nS',
+                                   name='SST_CSsoma')  # inhibitory (optional connection)
+        conn_SST_CSsoma.connect(
+            p=p.pSST_CS * p.pSST_CS_weight * p_SST_CS_soma if use_synaptic_probabilities else 1)  # inhibitory (optional connection)
+        conn_SST_CSsoma.w = p.wSST_CS
+        connections["SST_CSsoma"] = conn_SST_CSsoma
+
+        ## target CS dendrite
+        conn_SST_CSdendrite = Synapses(sst_neurons, cs_neurons, model='w: 1', on_pre='g_id+=w*nS',
+                                       name='SST_CSdendrite')  # inhibitory
+        conn_SST_CSdendrite.connect(
+            p=p.pSST_CS * p.pSST_CS_weight * (1 - p_SST_CS_soma) if use_synaptic_probabilities else 1)
+        conn_SST_CSdendrite.w = p.wSST_CS
+        connections["SST_CSdendrite"] = conn_SST_CSdendrite
+
+        ## target CC soma
+        conn_SST_CCsoma = Synapses(sst_neurons, cc_neurons, model='w: 1', on_pre='g_is+=w*nS',
+                                   name='SST_CCsoma')  # inhibitory (optional connection)
+        conn_SST_CCsoma.connect(
+            p=p.pSST_CC * p.pSST_CC_weight * p_SST_CC_soma if use_synaptic_probabilities else 1)  # inhibitory (optional connection)
+        conn_SST_CCsoma.w = p.wSST_CC
+        connections["SST_CCsoma"] = conn_SST_CCsoma
+
+        ## target CC dendrite
+        conn_SST_CCdendrite = Synapses(sst_neurons, cc_neurons, model='w: 1', on_pre='g_id+=w*nS',
+                                       name='SST_CCdendrite')  # inhibitory
+        conn_SST_CCdendrite.connect(
+            p=p.pSST_CC * p.pSST_CC_weight * (1 - p_SST_CC_soma) if use_synaptic_probabilities else 1)
+        conn_SST_CCdendrite.w = p.wSST_CC
+        connections["SST_CCdendrite"] = conn_SST_CCdendrite
+
+        extra_connections = [conn_SST_CSsoma, conn_SST_CSdendrite, conn_SST_CCsoma, conn_SST_CCdendrite]
+
+        # ##############################################################################
+        # Define Monitors (pSST_CS/CC_soma - case 2)
+        # ##############################################################################
+
+        # Record spikes of different neuron groups
+        spike_mon_sst = SpikeMonitor(sst_neurons)
+        spike_mon_pv = SpikeMonitor(pv_neurons)
+        spike_mon_cs = SpikeMonitor(cs_neurons)
+        spike_mon_cc = SpikeMonitor(cc_neurons)
+
+        spike_monitors = [spike_mon_sst, spike_mon_pv, spike_mon_cs, spike_mon_cc]
+
+        # Record conductances and membrane potential of neuron groups
+        state_mon_sst = StateMonitor(sst_neurons, ['v', 'g_e', 'g_i'], record=[0])
+        state_mon_pv = StateMonitor(pv_neurons, ['v', 'g_e', 'g_i'], record=[0])
+        state_mon_cs = StateMonitor(cs_neurons, ['v_s', 'v_d', 'g_es', 'g_is', 'g_ed', 'g_id'], record=[0])
+        state_mon_cc = StateMonitor(cc_neurons, ['v_s', 'v_d', 'g_es', 'g_is', 'g_ed', 'g_id'], record=[0])
+
+        state_monitors = [state_mon_sst, state_mon_pv, state_mon_cs, state_mon_cc]
+
+        # ##############################################################################
+        # Run Network (pSST_CS/CC_soma - case 2)
+        # ##############################################################################
+
+        print('* Run network simulation (pSST_CS/CC_soma - case 2)')
+        network.restore('initialized')
+
+        # Add extras to network
+        network.add(extra_connections)
+        network.add(spike_monitors)
+        network.add(state_monitors)
+
+        network.run(sim_duration, report='text')
+
+        output_folder_2 = f'{base_output_folder}/sst_soma_{p_SST_CS_soma}_{p_SST_CC_soma}' if base_output_folder else None
+        result_2 = analyse_network_simulation(spike_monitors, state_monitors, connections,
+                                              V_t=V_t, sim_duration=sim_duration,
+                                              output_folder=output_folder_2)
+
+        # Cleanup extras from network
+        network.remove(extra_connections)
+        network.remove(spike_monitors)
+        network.remove(state_monitors)
+
+    result_3 = None
+    if len(pSST_CS_soma_vector) >= 4:
+        p_SST_CS_soma = pSST_CS_soma_vector[3]
+        p_SST_CC_soma = pSST_CC_soma_vector[3]
+
+        # ##############################################################################
+        # Add extra synapses (pSST_CS/CC_soma - case 3)
+        # ##############################################################################
+
+        conn_SST_CSsoma = Synapses(sst_neurons, cs_neurons, model='w: 1', on_pre='g_is+=w*nS',
+                                   name='SST_CSsoma')  # inhibitory (optional connection)
+        conn_SST_CSsoma.connect(
+            p=p.pSST_CS * p.pSST_CS_weight * p_SST_CS_soma if use_synaptic_probabilities else 1)  # inhibitory (optional connection)
+        conn_SST_CSsoma.w = p.wSST_CS
+        connections["SST_CSsoma"] = conn_SST_CSsoma
+
+        ## target CS dendrite
+        conn_SST_CSdendrite = Synapses(sst_neurons, cs_neurons, model='w: 1', on_pre='g_id+=w*nS',
+                                       name='SST_CSdendrite')  # inhibitory
+        conn_SST_CSdendrite.connect(
+            p=p.pSST_CS * p.pSST_CS_weight * (1 - p_SST_CS_soma) if use_synaptic_probabilities else 1)
+        conn_SST_CSdendrite.w = p.wSST_CS
+        connections["SST_CSdendrite"] = conn_SST_CSdendrite
+
+        ## target CC soma
+        conn_SST_CCsoma = Synapses(sst_neurons, cc_neurons, model='w: 1', on_pre='g_is+=w*nS',
+                                   name='SST_CCsoma')  # inhibitory (optional connection)
+        conn_SST_CCsoma.connect(
+            p=p.pSST_CC * p.pSST_CC_weight * p_SST_CC_soma if use_synaptic_probabilities else 1)  # inhibitory (optional connection)
+        conn_SST_CCsoma.w = p.wSST_CC
+        connections["SST_CCsoma"] = conn_SST_CCsoma
+
+        ## target CC dendrite
+        conn_SST_CCdendrite = Synapses(sst_neurons, cc_neurons, model='w: 1', on_pre='g_id+=w*nS',
+                                       name='SST_CCdendrite')  # inhibitory
+        conn_SST_CCdendrite.connect(
+            p=p.pSST_CC * p.pSST_CC_weight * (1 - p_SST_CC_soma) if use_synaptic_probabilities else 1)
+        conn_SST_CCdendrite.w = p.wSST_CC
+        connections["SST_CCdendrite"] = conn_SST_CCdendrite
+
+        extra_connections = [conn_SST_CSsoma, conn_SST_CSdendrite, conn_SST_CCsoma, conn_SST_CCdendrite]
+
+        # ##############################################################################
+        # Define Monitors (pSST_CS/CC_soma - case 3)
+        # ##############################################################################
+
+        # Record spikes of different neuron groups
+        spike_mon_sst = SpikeMonitor(sst_neurons)
+        spike_mon_pv = SpikeMonitor(pv_neurons)
+        spike_mon_cs = SpikeMonitor(cs_neurons)
+        spike_mon_cc = SpikeMonitor(cc_neurons)
+
+        spike_monitors = [spike_mon_sst, spike_mon_pv, spike_mon_cs, spike_mon_cc]
+
+        # Record conductances and membrane potential of neuron groups
+        state_mon_sst = StateMonitor(sst_neurons, ['v', 'g_e', 'g_i'], record=[0])
+        state_mon_pv = StateMonitor(pv_neurons, ['v', 'g_e', 'g_i'], record=[0])
+        state_mon_cs = StateMonitor(cs_neurons, ['v_s', 'v_d', 'g_es', 'g_is', 'g_ed', 'g_id'], record=[0])
+        state_mon_cc = StateMonitor(cc_neurons, ['v_s', 'v_d', 'g_es', 'g_is', 'g_ed', 'g_id'], record=[0])
+
+        state_monitors = [state_mon_sst, state_mon_pv, state_mon_cs, state_mon_cc]
+
+        # ##############################################################################
+        # Run Network (pSST_CS/CC_soma - case 3)
+        # ##############################################################################
+
+        print('* Run network simulation (pSST_CS/CC_soma - case 3)')
+        network.restore('initialized')
+
+        # Add extras to network
+        network.add(extra_connections)
+        network.add(spike_monitors)
+        network.add(state_monitors)
+
+        network.run(sim_duration, report='text')
+
+        output_folder_3 = f'{base_output_folder}/sst_soma_{p_SST_CS_soma}_{p_SST_CC_soma}' if base_output_folder else None
+        result_3 = analyse_network_simulation(spike_monitors, state_monitors, connections,
+                                              V_t=V_t, sim_duration=sim_duration,
+                                              output_folder=output_folder_3)
+
+        # Cleanup extras from network
+        network.remove(extra_connections)
+        network.remove(spike_monitors)
+        network.remove(state_monitors)
+
+    return result_0, result_1, result_2, result_3
 
 
-def run_complete_simulation(params, simulate_sst_target_soma=True, seed_val=12345):
+def run_complete_simulation(params, seed_val=12345):
     p = Struct(**params)
 
     N = [p.N_cs, p.N_cc, p.N_sst, p.N_pv]
@@ -521,9 +720,19 @@ def run_complete_simulation(params, simulate_sst_target_soma=True, seed_val=1234
     spatial_phase = 1  # TODO What exactly does `spatial_phase` do?
     tsteps = int(p.duration / p.sim_dt)
 
+    pSST_CS_soma = p.pSST_CS_soma
+    assert len(pSST_CS_soma) <= 4
+
+    pSST_CC_soma = p.pSST_CC_soma
+    assert len(pSST_CC_soma) <= 4
+
+    assert len(pSST_CS_soma) == len(pSST_CC_soma)
+
     ################## iterate through different input angles ##################
-    results_with_sst_soma = []
-    results_without_sst_soma = []
+    degree_results_0 = [] if len(pSST_CS_soma) >= 1 else None
+    degree_results_1 = [] if len(pSST_CS_soma) >= 2 else None
+    degree_results_2 = [] if len(pSST_CS_soma) >= 3 else None
+    degree_results_3 = [] if len(pSST_CS_soma) >= 4 else None
     for degree in degrees:
         print(f"Running simulations for input of degree {degree} ...")
         rad = math.radians(degree)
@@ -541,31 +750,56 @@ def run_complete_simulation(params, simulate_sst_target_soma=True, seed_val=1234
         params_with_input["I_ext_sst"] = inputs[:, p.N_cs+p.N_cc:p.N_cs+p.N_cc+p.N_sst]
         params_with_input["I_ext_pv"] = inputs[:, p.N_cs+p.N_cc+p.N_sst:]
 
-        result_without_sst_soma, result_with_sst_soma = run_simulation_for_input(params_with_input, seed_val=seed_val,
-                                 simulate_sst_target_soma=simulate_sst_target_soma, use_synaptic_probabilities=True,
+        result_0, result_1, result_2, result_3 = run_simulation_for_input(params_with_input, seed_val=seed_val,
+                                 use_synaptic_probabilities=True,
                                  base_output_folder=f'output/{degree}')
 
-        if result_without_sst_soma:
-            results_without_sst_soma.append(result_without_sst_soma)
-            hlp.save_results_to_folder(result_without_sst_soma, output_folder=f'output/{degree}/without_sst_soma', file_name='results.json')
+        if result_0:
+            degree_results_0.append(result_0)
+            hlp.save_results_to_folder(result_0, output_folder=f'output/{degree}/sst_soma_{pSST_CS_soma[0]}_{pSST_CC_soma[0]}', file_name='results.json')
 
-        if result_with_sst_soma:
-            results_with_sst_soma.append(result_with_sst_soma)
-            hlp.save_results_to_folder(result_with_sst_soma, output_folder=f'output/{degree}/with_sst_soma', file_name='results.json')
+        if result_1:
+            degree_results_1.append(result_1)
+            hlp.save_results_to_folder(result_1, output_folder=f'output/{degree}/sst_soma_{pSST_CS_soma[1]}_{pSST_CC_soma[1]}', file_name='results.json')
+
+        if result_2:
+            degree_results_2.append(result_2)
+            hlp.save_results_to_folder(result_2, output_folder=f'output/{degree}/sst_soma_{pSST_CS_soma[2]}_{pSST_CC_soma[2]}', file_name='results.json')
+
+        if result_3:
+            degree_results_3.append(result_3)
+            hlp.save_results_to_folder(result_3, output_folder=f'output/{degree}/sst_soma_{pSST_CS_soma[3]}_{pSST_CC_soma[3]}', file_name='results.json')
 
     ################## calculate aggregate statistics for previous simulations ##################
-    # SST -> SOMA connection NOT present
-    agg_results_without_sst_to_soma = hlp.calculate_aggregate_results(results_without_sst_soma)
-    hlp.save_agg_results_to_folder(agg_results_without_sst_to_soma,
-                                   output_folder='output',
-                                   file_name='agg_results_without_sst_soma.json')
-
-    # SST -> SOMA connection present
-    agg_results_with_sst_to_soma = None
-    if simulate_sst_target_soma:
-        agg_results_with_sst_to_soma = hlp.calculate_aggregate_results(results_with_sst_soma)
-        hlp.save_agg_results_to_folder(agg_results_with_sst_to_soma,
+    agg_results_vector = []
+    if degree_results_0:
+        agg_results_0 = hlp.calculate_aggregate_results(degree_results_0)
+        agg_results_vector.append(agg_results_0)
+        hlp.save_agg_results_to_folder(agg_results_0,
                                        output_folder='output',
-                                       file_name='agg_results_with_sst_soma.json')
+                                       file_name=f'agg_results_sst_soma_{pSST_CS_soma[0]}_{pSST_CC_soma[0]}.json')
 
-    plot_selectivity_comparison(agg_results_without_sst=agg_results_without_sst_to_soma, agg_results_with_sst=agg_results_with_sst_to_soma, output_folder='output')
+    if degree_results_1:
+        agg_results_1 = hlp.calculate_aggregate_results(degree_results_1)
+        agg_results_vector.append(agg_results_1)
+        hlp.save_agg_results_to_folder(agg_results_1,
+                                       output_folder='output',
+                                       file_name=f'agg_results_sst_soma_{pSST_CS_soma[1]}_{pSST_CC_soma[1]}.json')
+
+    if degree_results_2:
+        agg_results_2 = hlp.calculate_aggregate_results(degree_results_2)
+        agg_results_vector.append(agg_results_2)
+        hlp.save_agg_results_to_folder(agg_results_2,
+                                       output_folder='output',
+                                       file_name=f'agg_results_sst_soma_{pSST_CS_soma[2]}_{pSST_CC_soma[2]}.json')
+
+    if degree_results_3:
+        agg_results_3 = hlp.calculate_aggregate_results(degree_results_3)
+        agg_results_vector.append(agg_results_3)
+        hlp.save_agg_results_to_folder(agg_results_3,
+                                       output_folder='output',
+                                       file_name=f'agg_results_sst_soma_{pSST_CS_soma[3]}_{pSST_CC_soma[3]}.json')
+
+    print(agg_results_vector)
+
+    plot_selectivity_comparison(agg_results_vector, output_folder='output')

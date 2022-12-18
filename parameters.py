@@ -56,6 +56,12 @@ default = {
     "wSST_CS":        0.19,
     "pSST_CS":        0.52,
     "pSST_CS_weight": 1,    # represents fraction of `pSST_CS` for connection probabilities
+    "pSST_CS_soma":   [0.5, 0.5,   1,  1],  # represents fraction of `pSST_CS*pSST_CS_weight` going to the CS soma; {1-this} goes to CS dendrite
+    # `pSST_CS_soma` and `pSST_CC_soma` are taken in pairs
+    "pSST_CC_soma":   [0.5,   1, 0.5,  1],   # represents fraction of `pSST_CC*pSST_CC_weight` going to the CC soma;  {1-this} goes to CC dendrite
+    "wSST_CC": 0.19,
+    "pSST_CC": 0.13,
+    "pSST_CC_weight": 1,  # represents fraction of `pSST_CC` for connection probabilities
 
     "wPV_CS":    0.32,
     "pPV_CS":    0.43,
@@ -68,10 +74,6 @@ default = {
 
     "wCC_PV":    0.48,
     "pCC_PV":    0.22,
-
-    "wSST_CC":        0.19,
-    "pSST_CC":        0.13,
-    "pSST_CC_weight": 1,    # represents fraction of `pSST_CC` for connection probabilities
 
     "wPV_CC":    0.52,
     "pPV_CC":    0.38,

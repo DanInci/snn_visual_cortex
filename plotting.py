@@ -188,26 +188,20 @@ def plot_isi_histograms(interspike_intervals, no_bins, autocorr=None, output_fol
     plt.close(fig)
 
 
-def plot_selectivity_comparison(agg_results_without_sst, agg_results_with_sst=None, output_folder=None, file_name='selectivity_comparison'):
+def plot_selectivity_comparison(agg_results_vector, output_folder=None, file_name='selectivity_comparison'):
     """ Plots the orientation and direction selectivity for all neuron groups"""
 
-    fig, axs = plt.subplots(1, 3, figsize=(26, 4))
-    bar_width = 0.4
+    fig, axs = plt.subplots(3, 1, figsize=(6 * len(agg_results_vector), 18))
+    bar_width = 0.8 / len(agg_results_vector)
     x_offset = 0.05
-    x = (np.arange(2) / 2 if agg_results_with_sst else 0) + x_offset
-    ticks = x + bar_width / 4 + x_offset if agg_results_with_sst else [x + bar_width / 4 + x_offset]
-    labels = ['Without SST->Soma', 'With SST->Soma'] if agg_results_with_sst else ['Without SST->Soma']
+    x = np.arange(len(agg_results_vector)) / len(agg_results_vector) + x_offset
+    ticks = x + bar_width / 4 + x_offset
+    labels = [f'Case {idx}' for idx, _ in enumerate(agg_results_vector)]
 
-    orientation_s_cs = [agg_results_without_sst["output_selectivity_cs"]["orientation"]]
-    orientation_s_cc = [agg_results_without_sst["output_selectivity_cc"]["orientation"]]
-    orientation_s_sst = [agg_results_without_sst["output_selectivity_sst"]["orientation"]]
-    orientation_s_pv = [agg_results_without_sst["output_selectivity_pv"]["orientation"]]
-
-    if agg_results_with_sst:
-        orientation_s_cs.append(agg_results_with_sst["output_selectivity_cs"]["orientation"])
-        orientation_s_cc.append(agg_results_with_sst["output_selectivity_cc"]["orientation"])
-        orientation_s_sst.append(agg_results_with_sst["output_selectivity_sst"]["orientation"])
-        orientation_s_pv.append(agg_results_with_sst["output_selectivity_pv"]["orientation"])
+    orientation_s_cs = [agg_results["output_selectivity_cs"]["orientation"] for agg_results in agg_results_vector]
+    orientation_s_cc = [agg_results["output_selectivity_cc"]["orientation"] for agg_results in agg_results_vector]
+    orientation_s_sst = [agg_results["output_selectivity_sst"]["orientation"] for agg_results in agg_results_vector]
+    orientation_s_pv = [agg_results["output_selectivity_pv"]["orientation"] for agg_results in agg_results_vector]
 
     # plot orientation selectivity
     axs[0].bar(x, orientation_s_cs, bar_width / 4, label="CS", color='b')
@@ -220,16 +214,10 @@ def plot_selectivity_comparison(agg_results_without_sst, agg_results_with_sst=No
     axs[0].set_xticklabels(labels)
     axs[0].legend(loc='best')
 
-    orientation_s_paper_cs = [agg_results_without_sst["output_selectivity_cs"]["orientation_paper"]]
-    orientation_s_paper_cc = [agg_results_without_sst["output_selectivity_cc"]["orientation_paper"]]
-    orientation_s_paper_sst = [agg_results_without_sst["output_selectivity_sst"]["orientation_paper"]]
-    orientation_s_paper_pv = [agg_results_without_sst["output_selectivity_pv"]["orientation_paper"]]
-
-    if agg_results_with_sst:
-        orientation_s_paper_cs.append(agg_results_with_sst["output_selectivity_cs"]["orientation_paper"])
-        orientation_s_paper_cc.append(agg_results_with_sst["output_selectivity_cc"]["orientation_paper"])
-        orientation_s_paper_sst.append(agg_results_with_sst["output_selectivity_sst"]["orientation_paper"])
-        orientation_s_paper_pv.append(agg_results_with_sst["output_selectivity_pv"]["orientation_paper"])
+    orientation_s_paper_cs = [agg_results["output_selectivity_cs"]["orientation_paper"] for agg_results in agg_results_vector]
+    orientation_s_paper_cc = [agg_results["output_selectivity_cc"]["orientation_paper"] for agg_results in agg_results_vector]
+    orientation_s_paper_sst = [agg_results["output_selectivity_sst"]["orientation_paper"] for agg_results in agg_results_vector]
+    orientation_s_paper_pv = [agg_results["output_selectivity_pv"]["orientation_paper"] for agg_results in agg_results_vector]
 
     # plot orientation selectivity
     axs[1].bar(x, orientation_s_paper_cs, bar_width / 4, label="CS", color='b')
@@ -242,16 +230,10 @@ def plot_selectivity_comparison(agg_results_without_sst, agg_results_with_sst=No
     axs[1].set_xticklabels(labels)
     axs[1].legend(loc='best')
 
-    direction_s_cs = [agg_results_without_sst["output_selectivity_cs"]["direction"]]
-    direction_s_cc = [agg_results_without_sst["output_selectivity_cc"]["direction"]]
-    direction_s_sst = [agg_results_without_sst["output_selectivity_sst"]["direction"]]
-    direction_s_pv = [agg_results_without_sst["output_selectivity_pv"]["direction"]]
-
-    if agg_results_with_sst:
-        direction_s_cs.append(agg_results_with_sst["output_selectivity_cs"]["direction"])
-        direction_s_cc.append(agg_results_with_sst["output_selectivity_cc"]["direction"])
-        direction_s_sst.append(agg_results_with_sst["output_selectivity_sst"]["direction"])
-        direction_s_pv.append(agg_results_with_sst["output_selectivity_pv"]["direction"])
+    direction_s_cs = [agg_results["output_selectivity_cs"]["direction"] for agg_results in agg_results_vector]
+    direction_s_cc = [agg_results["output_selectivity_cc"]["direction"] for agg_results in agg_results_vector]
+    direction_s_sst = [agg_results["output_selectivity_sst"]["direction"] for agg_results in agg_results_vector]
+    direction_s_pv = [agg_results["output_selectivity_pv"]["direction"] for agg_results in agg_results_vector]
 
     # plot direction selectivity
     axs[2].bar(x, direction_s_cs, bar_width / 4, label="CS", color='b')
