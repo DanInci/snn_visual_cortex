@@ -362,14 +362,14 @@ def run_simulation_for_input(params, simulate_sst_target_soma, use_synaptic_prob
     ## target CS dendrite
     conn_SST_CSdendrite = Synapses(sst_neurons, cs_neurons, model='w: 1', on_pre='g_id+=w*nS',
                                    name='SST_CSdendrite')  # inhibitory
-    conn_SST_CSdendrite.connect(p=p.pSST_CS if use_synaptic_probabilities else 1)
+    conn_SST_CSdendrite.connect(p=p.pSST_CS*p.pSST_CS_weight if use_synaptic_probabilities else 1)
     conn_SST_CSdendrite.w = p.wSST_CS
     connections["SST_CSdendrite"] = conn_SST_CSdendrite
 
     ## target CC dendrite
     conn_SST_CCdendrite = Synapses(sst_neurons, cc_neurons, model='w: 1', on_pre='g_id+=w*nS',
                                    name='SST_CCdendrite')  # inhibitory
-    conn_SST_CCdendrite.connect(p=p.pSST_CC if use_synaptic_probabilities else 1)
+    conn_SST_CCdendrite.connect(p=p.pSST_CC*p.pSST_CC_weight if use_synaptic_probabilities else 1)
     conn_SST_CCdendrite.w = p.wSST_CC
     connections["SST_CCdendrite"] = conn_SST_CCdendrite
 
@@ -429,28 +429,28 @@ def run_simulation_for_input(params, simulate_sst_target_soma, use_synaptic_prob
         ## target CS soma
         conn_SST_CSsoma = Synapses(sst_neurons, cs_neurons, model='w: 1', on_pre='g_is+=w*nS',
                                    name='SST_CSsoma')  # inhibitory (optional connection)
-        conn_SST_CSsoma.connect(p=p.pSST_CS / 2 if use_synaptic_probabilities else 1)  # inhibitory (optional connection)
+        conn_SST_CSsoma.connect(p=p.pSST_CS*p.pSST_CS_weight / 2 if use_synaptic_probabilities else 1)  # inhibitory (optional connection)
         conn_SST_CSsoma.w = p.wSST_CS
         connections["SST_CSsoma"] = conn_SST_CSsoma
 
         ## target CS dendrite
         conn_SST_CSdendrite = Synapses(sst_neurons, cs_neurons, model='w: 1', on_pre='g_id+=w*nS',
                                        name='SST_CSdendrite')  # inhibitory
-        conn_SST_CSdendrite.connect(p=p.pSST_CS/2 if use_synaptic_probabilities else 1)
+        conn_SST_CSdendrite.connect(p=p.pSST_CS*p.pSST_CS_weight/2 if use_synaptic_probabilities else 1)
         conn_SST_CSdendrite.w = p.wSST_CS
         connections["SST_CSdendrite"] = conn_SST_CSdendrite
 
         ## target CC soma
         conn_SST_CCsoma = Synapses(sst_neurons, cc_neurons, model='w: 1', on_pre='g_is+=w*nS',
                                    name='SST_CCsoma')  # inhibitory (optional connection)
-        conn_SST_CCsoma.connect(p=p.pSST_CC / 2 if use_synaptic_probabilities else 1)  # inhibitory (optional connection)
+        conn_SST_CCsoma.connect(p=p.pSST_CC*p.pSST_CC_weight / 2 if use_synaptic_probabilities else 1)  # inhibitory (optional connection)
         conn_SST_CCsoma.w = p.wSST_CC
         connections["SST_CCsoma"] = conn_SST_CCsoma
 
         ## target CC dendrite
         conn_SST_CCdendrite = Synapses(sst_neurons, cc_neurons, model='w: 1', on_pre='g_id+=w*nS',
                                        name='SST_CCdendrite')  # inhibitory
-        conn_SST_CCdendrite.connect(p=p.pSST_CC/2 if use_synaptic_probabilities else 1)
+        conn_SST_CCdendrite.connect(p=p.pSST_CC*p.pSST_CC_weight/2 if use_synaptic_probabilities else 1)
         conn_SST_CCdendrite.w = p.wSST_CC
         connections["SST_CCdendrite"] = conn_SST_CCdendrite
 

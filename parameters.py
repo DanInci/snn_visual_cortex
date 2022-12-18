@@ -47,14 +47,15 @@ default = {
     "wCS_CS":    0.27,
     "pCS_CS":    0.16,
 
-    "wCS_SST":   0.05,
-    "pCS_SST":   0.23,
+    "wCS_SST":        0.05,
+    "pCS_SST":    0.23,
 
     "wCS_PV":    1.01,
     "pCS_PV":    0.18,
 
-    "wSST_CS":   0.19,
-    "pSST_CS":   0.52,
+    "wSST_CS":        0.19,
+    "pSST_CS":        0.52,
+    "pSST_CS_weight": 1,    # represents fraction of `pSST_CS` for connection probabilities
 
     "wPV_CS":    0.32,
     "pPV_CS":    0.43,
@@ -68,8 +69,9 @@ default = {
     "wCC_PV":    0.48,
     "pCC_PV":    0.22,
 
-    "wSST_CC":   0.19,
-    "pSST_CC":   0.13,
+    "wSST_CC":        0.19,
+    "pSST_CC":        0.13,
+    "pSST_CC_weight": 1,    # represents fraction of `pSST_CC` for connection probabilities
 
     "wPV_CC":    0.52,
     "pPV_CC":    0.38,
