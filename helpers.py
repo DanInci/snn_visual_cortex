@@ -205,7 +205,7 @@ def save_results_to_folder(results, output_folder=None, file_name='results.json'
         json_file.close()
 
 
-def distributionInput(a_data, b_data, spatialF, temporalF, orientation, spatialPhase, amplitude, T, steady_input, N):
+def distributionInput(a_data, b_data, spatialF, orientation, spatialPhase, amplitude, T, steady_input, N):
     """
     Generates a moving bar as input to CS, CC, PV, SST.
     Using the function from textbook theoretical neurosciences.
@@ -225,15 +225,13 @@ def distributionInput(a_data, b_data, spatialF, temporalF, orientation, spatialP
             for t in range(T):
                 inputs_p.append(amplitude[i] * np.cos(
                     spatialF * a_data[popu[0]:popu[1]] * np.cos(orientation) +
-                    spatialF * b_data[popu[0]:popu[1]] * np.sin(orientation) - spatialPhase)
-                                * np.cos(temporalF) + amplitude[i])
+                    spatialF * b_data[popu[0]:popu[1]] * np.sin(orientation) - spatialPhase) + amplitude[i])
             inputs_p = np.array(inputs_p)
         else:
             for t in range(T):
                 inputs_p.append(amplitude[i] * np.cos(
                     spatialF * a_data[popu[0]:popu[1]] * np.cos(orientation) +
-                    spatialF * b_data[popu[0]:popu[1]] * np.sin(orientation) - spatialPhase)
-                                * np.cos(temporalF * t) + amplitude[i])
+                    spatialF * b_data[popu[0]:popu[1]] * np.sin(orientation) - spatialPhase * t) + amplitude[i])
             inputs_p = np.array(inputs_p)
         i += 1
         inputs_p_all.append(inputs_p)

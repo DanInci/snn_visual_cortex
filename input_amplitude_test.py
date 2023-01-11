@@ -24,7 +24,6 @@ def run_input_amplitude_simulation(params, input_amplitudes, seed_val=12345):
     b_data = np.sqrt(length) * np.sin(angle)
 
     spatial_F = 10
-    temporal_F = 50
     spatial_phase = 1
     tsteps = int(p.duration / p.sim_dt)
 
@@ -34,7 +33,7 @@ def run_input_amplitude_simulation(params, input_amplitudes, seed_val=12345):
         rad = math.radians(degree)
         inputs = hlp.distributionInput(
             a_data=a_data, b_data=b_data,
-            spatialF=spatial_F, temporalF=temporal_F, orientation=rad,
+            spatialF=spatial_F, orientation=rad,
             spatialPhase=spatial_phase, amplitude=input_amplitudes, T=tsteps,
             steady_input=input_steady, N=N
         )
