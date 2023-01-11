@@ -196,7 +196,7 @@ def plot_selectivity_comparison(agg_results_vector, output_folder=None, file_nam
     x_offset = 0.05
     x = np.arange(len(agg_results_vector)) / len(agg_results_vector) + x_offset
     ticks = x + bar_width / 4 + x_offset
-    labels = [f'Case {idx}' for idx, _ in enumerate(agg_results_vector)]
+    labels = [f'SST->Soma {agg_results["pSST_CS_soma"]}CS/{agg_results["pSST_CC_soma"]}CC' for agg_results in agg_results_vector]
 
     orientation_s_cs = [agg_results["output_selectivity_cs"]["orientation"] for agg_results in agg_results_vector]
     orientation_s_cc = [agg_results["output_selectivity_cc"]["orientation"] for agg_results in agg_results_vector]

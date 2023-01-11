@@ -8,19 +8,19 @@ N_CS = 45
 default = {
     ### General parameters
     "duration": 3 * second,  # Total simulation time
-    "sim_dt":   0.1 * ms,  # Integrator/sampling step
+    "sim_dt":   0.1 * ms,    # Integrator/sampling step
 
     "N_sst": N_SST,  # Number of SST neurons (inhibitory)
-    "N_pv":  N_PV,  # Number of PV neurons (inhibitory)
-    "N_cc":  N_CC,  # Number of CC neurons (excitatory)
-    "N_cs":  N_CS,  # Number of CS neurons (excitatory)
+    "N_pv":  N_PV,   # Number of PV neurons (inhibitory)
+    "N_cc":  N_CC,   # Number of CC neurons (excitatory)
+    "N_cs":  N_CS,   # Number of CS neurons (excitatory)
 
     ### Neuron parameters
     "tau_S":    16 * ms,
     "tau_D":    7 * ms,
     "tau_SST":  20 * ms,
     "tau_PV":   10 * ms,
-    "tau_E":    5 * ms,  # Excitatory synaptic time constant
+    "tau_E":    5 * ms,   # Excitatory synaptic time constant
     "tau_I":    10 * ms,  # Inhibitory synaptic time constant
 
     "C_S":      370 * pF,
