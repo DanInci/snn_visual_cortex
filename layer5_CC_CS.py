@@ -707,7 +707,7 @@ def run_complete_simulation(params, seed_val=12345):
     N = [p.N_cs, p.N_cc, p.N_sst, p.N_pv]
     degrees = p.degrees
 
-    input_steady = [p.I_cs_steady, p.I_cc_steady, p.I_sst_steady, p.I_pv_steady]  # TODO What is this?
+    input_steady = [p.I_cs_steady, p.I_cc_steady, p.I_sst_steady, p.I_pv_steady]
     input_amplitudes = [p.I_cs_amp, p.I_cc_amp, p.I_sst_amp, p.I_pv_amp]
 
     length = np.random.uniform(0, 1, (np.sum(N),))
@@ -715,9 +715,8 @@ def run_complete_simulation(params, seed_val=12345):
     a_data = np.sqrt(length) * np.cos(angle)
     b_data = np.sqrt(length) * np.sin(angle)
 
-    spatial_F = 10  # TODO What exactly does `spatial_F` do?
-    temporal_F = 50  # TODO What exactly does `temporal_F` do?
-    spatial_phase = 1  # TODO What exactly does `spatial_phase` do?
+    spatial_F = 10
+    spatial_phase = 1
     tsteps = int(p.duration / p.sim_dt)
 
     pSST_CS_soma = p.pSST_CS_soma
@@ -738,7 +737,7 @@ def run_complete_simulation(params, seed_val=12345):
         rad = math.radians(degree)
         inputs = hlp.distributionInput(
             a_data=a_data, b_data=b_data,
-            spatialF=spatial_F, temporalF=temporal_F, orientation=rad,
+            spatialF=spatial_F, orientation=rad,
             spatialPhase=spatial_phase, amplitude=input_amplitudes, T=tsteps,
             steady_input=input_steady, N=N
         )
@@ -799,7 +798,5 @@ def run_complete_simulation(params, seed_val=12345):
         hlp.save_agg_results_to_folder(agg_results_3,
                                        output_folder='output',
                                        file_name=f'agg_results_sst_soma_{pSST_CS_soma[3]}_{pSST_CC_soma[3]}.json')
-
-    print(agg_results_vector)
 
     plot_selectivity_comparison(agg_results_vector, output_folder='output')
