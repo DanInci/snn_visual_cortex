@@ -44,4 +44,5 @@ eqs_exc_without_dendrite = '''
     dg_is/dt = -g_is/tau_I : siemens
 
     I_s = g_es*(E_e - v_s) + g_is*(E_i - v_s) : amp
+    K : 1
 '''

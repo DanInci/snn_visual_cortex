@@ -11,23 +11,15 @@ class Struct:
         self.__dict__.update(entries)
 
 
-def analyse_network_simulation(spike_monitors, state_monitors, synapses, V_t, sim_duration, output_folder=None):
+def analyse_network_simulation(spike_monitors, state_monitors, synapses, p, output_folder=None):
     spike_mon_sst, spike_mon_pv, spike_mon_cs, spike_mon_cc = spike_monitors
     state_mon_sst, state_mon_pv, state_mon_cs, state_mon_cc = state_monitors
-
-    ### General analysis parameters
-    no_bins_firing_rates = 10  # Number of bins for firing rates historgram
-    no_bins_isi = 10  # Number of bins for interspike intervals historgram
-
-    plot_only_from_equilibrium = True  # Plot graphs only from equilibrium time
-    recompute_equilibrium = False  # If true, will try and recompute equilibirum time, if not will use `default_equilibrium_time`
-    default_equilibrium_t = 0.2*second  # Default equilibirium time, will be used in case `recompute_equilibrium` is False. Should be set based on previous simulation results
 
     ################################################################################
     # Analysis and plotting
     ################################################################################
 
-    if recompute_equilibrium:
+    if p.recompute_equilibrium:
         equilibrium_times = []
         for idx, spike_mon in enumerate([spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv]):
             t, firing_rate = hlp.compute_equilibrium_for_neuron_type(spike_mon)
@@ -37,34 +29,35 @@ def analyse_network_simulation(spike_monitors, state_monitors, synapses, V_t, si
             equilibrium_times.append(t)
 
         equilibrium_t = max(equilibrium_times) * second
-        if equilibrium_t < sim_duration:
+        if equilibrium_t < p.duration:
             print(f"* Equilibrium for all neurons start at: {equilibrium_t}")
         else:
             print(f"WARNING: Equilibrium was not found during the duration of the simulation")
     else:
-        print(f"* Skipping recalculating equilibrium time. Using default equilibrium time={default_equilibrium_t}")
-        equilibrium_t = default_equilibrium_t
+        print(f"* Skipping recalculating equilibrium time. Using default equilibrium time={p.default_equilibrium_t}")
+        equilibrium_t = p.default_equilibrium_t
 
     # Only compute properties of the system from equilibrium time to end simulation time
     from_t = equilibrium_t
-    to_t = sim_duration
+    to_t = p.duration
 
-    raster_from_t = from_t if plot_only_from_equilibrium else 0
-    raster_to_t = min(raster_from_t + 3 * second, sim_duration)
+    raster_from_t = from_t if p.plot_only_from_equilibrium else 0
+    raster_to_t = min(raster_from_t + 3 * second, p.duration)
     plot_raster(spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv, raster_from_t, raster_to_t,
                 output_folder=output_folder, file_name='spike_raster_plot')
 
-    plot_states(state_mon_cs, spike_mon_cs, V_t, plot_only_from_equilibrium, from_t, to_t, output_folder=output_folder,
+    plot_states(state_mon_cs, spike_mon_cs, p.V_t, p.plot_only_from_equilibrium, from_t, to_t, output_folder=output_folder,
                 file_name='state_plot_CS')
-    plot_states(state_mon_cc, spike_mon_cc, V_t, plot_only_from_equilibrium, from_t, to_t, output_folder=output_folder,
+    plot_states(state_mon_cc, spike_mon_cc, p.V_t, p.plot_only_from_equilibrium, from_t, to_t, output_folder=output_folder,
                 file_name='state_plot_CC')
-    plot_states(state_mon_sst, spike_mon_sst, V_t, plot_only_from_equilibrium, from_t, to_t,
+    plot_states(state_mon_sst, spike_mon_sst, p.V_t, p.plot_only_from_equilibrium, from_t, to_t,
                 output_folder=output_folder, file_name='state_plot_SST')
-    plot_states(state_mon_pv, spike_mon_pv, V_t, plot_only_from_equilibrium, from_t, to_t, output_folder=output_folder,
+    plot_states(state_mon_pv, spike_mon_pv, p.V_t, p.plot_only_from_equilibrium, from_t, to_t, output_folder=output_folder,
                 file_name='state_plot_PV')
 
     # Plot connectivity graph
-    # plot_neuron_connectivity(synapses, output_folder=output_folder, file_name='neuron_connectivity')
+    if p.plot_connectivity_graph:
+        plot_neuron_connectivity(synapses, output_folder=output_folder, file_name='neuron_connectivity')
 
     results = {}
 
@@ -77,7 +70,7 @@ def analyse_network_simulation(spike_monitors, state_monitors, synapses, V_t, si
 
     firing_rates = [results["firing_rates_cs"], results["firing_rates_cc"], results["firing_rates_sst"],
                     results["firing_rates_pv"]]
-    plot_firing_rate_histograms(firing_rates, no_bins_firing_rates, output_folder=output_folder,
+    plot_firing_rate_histograms(firing_rates, p.no_bins_firing_rates, output_folder=output_folder,
                                 file_name='firing_rate_histograms')
 
     # Compute inter-spike intervals for each neuron group
@@ -93,29 +86,29 @@ def analyse_network_simulation(spike_monitors, state_monitors, synapses, V_t, si
 
     # Compute auto-correlation for isi for each neuron group
     # for CS
-    autocorr_cs = hlp.compute_autocorr_struct(results["interspike_intervals_cs"], no_bins_isi)
+    autocorr_cs = hlp.compute_autocorr_struct(results["interspike_intervals_cs"], p.no_bins_isi)
     if autocorr_cs:
         results["acorr_min_cs"] = autocorr_cs["minimum"]
 
     # for CC
-    autocorr_cc = hlp.compute_autocorr_struct(results["interspike_intervals_cc"], no_bins_isi)
+    autocorr_cc = hlp.compute_autocorr_struct(results["interspike_intervals_cc"], p.no_bins_isi)
     if autocorr_cc:
         results["acorr_min_cc"] = autocorr_cc["minimum"]
 
     # for SST
-    autocorr_sst = hlp.compute_autocorr_struct(results["interspike_intervals_sst"], no_bins_isi)
+    autocorr_sst = hlp.compute_autocorr_struct(results["interspike_intervals_sst"], p.no_bins_isi)
     if autocorr_sst:
         results["acorr_min_sst"] = autocorr_sst["minimum"]
 
     # for PV
-    autocorr_pv = hlp.compute_autocorr_struct(results["interspike_intervals_pv"], no_bins_isi)
+    autocorr_pv = hlp.compute_autocorr_struct(results["interspike_intervals_pv"], p.no_bins_isi)
     if autocorr_pv:
         results["acorr_min_sst"] = autocorr_pv["minimum"]
 
     interspike_intervals = [results["interspike_intervals_cs"], results["interspike_intervals_cc"],
                             results["interspike_intervals_sst"], results["interspike_intervals_pv"]]
     autocorr = [autocorr_cs, autocorr_cc, autocorr_sst, autocorr_pv]
-    plot_isi_histograms(interspike_intervals, no_bins_isi, autocorr=autocorr, output_folder=output_folder,
+    plot_isi_histograms(interspike_intervals, p.no_bins_isi, autocorr=autocorr, output_folder=output_folder,
                         file_name='isi_histograms')
 
     # Detect bursts
@@ -146,14 +139,89 @@ def analyse_network_simulation(spike_monitors, state_monitors, synapses, V_t, si
     return results
 
 
-def run_simulation_for_weighted_sst_soma_dendrite(network, neurons, synapses, p, p_SST_CS_soma, p_SST_CC_soma, base_output_folder, use_synaptic_probabilities, use_dendrite_model):
+def run_simulation_without_exh_dendrite(network, neurons, synapses, p, base_output_folder, use_synaptic_probabilities):
     sst_neurons, pv_neurons, cs_neurons, cc_neurons = neurons
 
     E_l = p.E_l  # leak reversal potential
     V_t = p.V_t  # spiking threashold
 
-    p_SST_CS_dendrite = 1 - p_SST_CS_soma
-    p_SST_CC_dendrite = 1 - p_SST_CC_soma
+    ### External Input parameters
+    I_ext_sst = TimedArray(p.I_ext_sst*nS, dt=p.sim_dt)
+    I_ext_pv = TimedArray(p.I_ext_pv*nS, dt=p.sim_dt)
+    I_ext_cs = TimedArray(p.I_ext_cs*nS, dt=p.sim_dt)
+    I_ext_cc = TimedArray(p.I_ext_cc*nS, dt=p.sim_dt)
+
+    # ##############################################################################
+    # Add extra synapses (pSST_CS/CC_soma)
+    # ##############################################################################
+
+    ## target CS soma
+    conn_SST_CSsoma = Synapses(sst_neurons, cs_neurons, model='w: 1', on_pre='g_is+=w*nS', name='SST_CSsoma')  # inhibitory (optional connection)
+    conn_SST_CSsoma.connect(p=p.pSST_CS * p.pSST_CS_weight if use_synaptic_probabilities else 1)  # inhibitory (optional connection)
+    conn_SST_CSsoma.w = p.wSST_CS
+    synapses["SST_CSsoma"] = conn_SST_CSsoma
+
+    ## target CC soma
+    conn_SST_CCsoma = Synapses(sst_neurons, cc_neurons, model='w: 1', on_pre='g_is+=w*nS' ,name='SST_CCsoma')  # inhibitory (optional connection)
+    conn_SST_CCsoma.connect(p=p.pSST_CC * p.pSST_CC_weight if use_synaptic_probabilities else 1)  # inhibitory (optional connection)
+    conn_SST_CCsoma.w = p.wSST_CC
+    synapses["SST_CCsoma"] = conn_SST_CCsoma
+
+    extra_connections = [conn_SST_CSsoma, conn_SST_CCsoma]
+
+    # ##############################################################################
+    # Define Monitors (pSST_CS/CC_soma)
+    # ##############################################################################
+
+    # Record spikes of different neuron groups
+    spike_mon_sst = SpikeMonitor(sst_neurons)
+    spike_mon_pv = SpikeMonitor(pv_neurons)
+    spike_mon_cs = SpikeMonitor(cs_neurons)
+    spike_mon_cc = SpikeMonitor(cc_neurons)
+
+    spike_monitors = [spike_mon_sst, spike_mon_pv, spike_mon_cs, spike_mon_cc]
+
+    # Record conductances and membrane potential of neuron groups
+    inh_neuron_variables = ['v', 'g_e', 'g_i']
+    state_mon_sst = StateMonitor(sst_neurons, inh_neuron_variables, record=[0])
+    state_mon_pv = StateMonitor(pv_neurons, inh_neuron_variables, record=[0])
+
+    exc_neuron_variables = ['v_s', 'g_es', 'g_is']
+    state_mon_cs = StateMonitor(cs_neurons, exc_neuron_variables, record=[0])
+    state_mon_cc = StateMonitor(cc_neurons, exc_neuron_variables, record=[0])
+
+    state_monitors = [state_mon_sst, state_mon_pv, state_mon_cs, state_mon_cc]
+
+    # ##############################################################################
+    # Run Network (pSST_CS/CC_soma)
+    # ##############################################################################
+
+    print(f'* Run network simulation (pSST_CS/CC_soma - case 1CS / 1CC - no exh dendrites)')
+    network.restore('initialized')
+
+    # Add extras to network
+    network.add(extra_connections)
+    network.add(spike_monitors)
+    network.add(state_monitors)
+
+    network.run(p.duration, report='text')
+
+    output_folder = f'{base_output_folder}/sst_soma_1CS_1CC' if base_output_folder else None
+    result = analyse_network_simulation(spike_monitors, state_monitors, synapses, p, output_folder=output_folder)
+
+    # Cleanup extras from network
+    network.remove(extra_connections)
+    network.remove(spike_monitors)
+    network.remove(state_monitors)
+
+    return result
+
+
+def run_simulation_for_weighted_sst_soma_dendrite(network, neurons, synapses, p, p_SST_CS_soma, p_SST_CC_soma, base_output_folder, use_synaptic_probabilities):
+    sst_neurons, pv_neurons, cs_neurons, cc_neurons = neurons
+
+    E_l = p.E_l  # leak reversal potential
+    V_t = p.V_t  # spiking threashold
 
     ### External Input parameters
     I_ext_sst = TimedArray(p.I_ext_sst*nS, dt=p.sim_dt)
@@ -176,7 +244,7 @@ def run_simulation_for_weighted_sst_soma_dendrite(network, neurons, synapses, p,
     conn_SST_CSdendrite = Synapses(sst_neurons, cs_neurons, model='w: 1', on_pre='g_id+=w*nS',
                                    name='SST_CSdendrite')  # inhibitory
     conn_SST_CSdendrite.connect(
-        p=p.pSST_CS * p.pSST_CS_weight * p_SST_CS_dendrite if use_synaptic_probabilities else 1)
+        p=p.pSST_CS * p.pSST_CS_weight * (1 - p_SST_CS_soma) if use_synaptic_probabilities else 1)
     conn_SST_CSdendrite.w = p.wSST_CS
     synapses["SST_CSdendrite"] = conn_SST_CSdendrite
 
@@ -192,7 +260,7 @@ def run_simulation_for_weighted_sst_soma_dendrite(network, neurons, synapses, p,
     conn_SST_CCdendrite = Synapses(sst_neurons, cc_neurons, model='w: 1', on_pre='g_id+=w*nS',
                                    name='SST_CCdendrite')  # inhibitory
     conn_SST_CCdendrite.connect(
-        p=p.pSST_CC * p.pSST_CC_weight * p_SST_CS_dendrite if use_synaptic_probabilities else 1)
+        p=p.pSST_CC * p.pSST_CC_weight * (1 - p_SST_CC_soma) if use_synaptic_probabilities else 1)
     conn_SST_CCdendrite.w = p.wSST_CC
     synapses["SST_CCdendrite"] = conn_SST_CCdendrite
 
@@ -215,7 +283,7 @@ def run_simulation_for_weighted_sst_soma_dendrite(network, neurons, synapses, p,
     state_mon_sst = StateMonitor(sst_neurons, inh_neuron_variables, record=[0])
     state_mon_pv = StateMonitor(pv_neurons, inh_neuron_variables, record=[0])
 
-    exc_neuron_variables = ['v_s', 'v_d', 'g_es', 'g_is', 'g_ed', 'g_id'] if use_dendrite_model else ['v_s', 'g_es', 'g_is']
+    exc_neuron_variables = ['v_s', 'v_d', 'g_es', 'g_is', 'g_ed', 'g_id']
     state_mon_cs = StateMonitor(cs_neurons, exc_neuron_variables, record=[0])
     state_mon_cc = StateMonitor(cc_neurons, exc_neuron_variables, record=[0])
 
@@ -235,10 +303,8 @@ def run_simulation_for_weighted_sst_soma_dendrite(network, neurons, synapses, p,
 
     network.run(p.duration, report='text')
 
-    output_folder = f'{base_output_folder}/sst_soma_{p_SST_CS_soma}_{p_SST_CC_soma}' if base_output_folder else None
-    result = analyse_network_simulation(spike_monitors, state_monitors, synapses,
-                                          V_t=p.V_t, sim_duration=p.duration,
-                                          output_folder=output_folder)
+    output_folder = f'{base_output_folder}/sst_soma_{p_SST_CS_soma}CS_{p_SST_CC_soma}CC' if base_output_folder else None
+    result = analyse_network_simulation(spike_monitors, state_monitors, synapses, p, output_folder=output_folder)
 
     # Cleanup extras from network
     network.remove(extra_connections)
@@ -248,7 +314,7 @@ def run_simulation_for_weighted_sst_soma_dendrite(network, neurons, synapses, p,
     return result
 
 
-def run_simulation_for_input(params, use_synaptic_probabilities, use_dendrite_model, seed_val=12345, base_output_folder=None):
+def run_simulation_for_input(params, use_synaptic_probabilities, use_dendrite_model, seed_val, base_output_folder=None):
     p = Struct(**params)
 
     start_scope()
@@ -257,7 +323,7 @@ def run_simulation_for_input(params, use_synaptic_probabilities, use_dendrite_mo
     E_l = p.E_l  # leak reversal potential
     V_t = p.V_t  # spiking threashold
 
-    assert len(p.pSST_CS_soma) == len(p.pSST_CC_soma) # since they are taken in pairs
+    assert len(p.pSST_CS_soma) == len(p.pSST_CC_soma)  # since they are taken in pairs
 
     ################################################################################
     # Define neurons
@@ -450,17 +516,22 @@ def run_simulation_for_input(params, use_synaptic_probabilities, use_dendrite_mo
             result = run_simulation_for_weighted_sst_soma_dendrite(network, neurons, synapses, p,
                                                                    p_SST_CS_soma, p_SST_CC_soma,
                                                                    base_output_folder,
-                                                                   use_synaptic_probabilities,
-                                                                   use_dendrite_model)
+                                                                   use_synaptic_probabilities)
 
             result["pSST_CS_soma"] = p_SST_CS_soma
             result["pSST_CC_soma"] = p_SST_CC_soma
             results.append(result)
+    else:
+        result = run_simulation_without_exh_dendrite(network, neurons, synapses, p, base_output_folder, use_synaptic_probabilities)
+
+        result["pSST_CS_soma"] = 1
+        result["pSST_CC_soma"] = 1
+        results.append(result)
 
     return results
 
 
-def run_complete_simulation(params, seed_val=12345):
+def run_complete_simulation(params, use_dendrite_model=True, use_synaptic_probabilities=True, seed_val=12345):
     p = Struct(**params)
 
     N = [p.N_cs, p.N_cc, p.N_sst, p.N_pv]
@@ -480,9 +551,12 @@ def run_complete_simulation(params, seed_val=12345):
 
     assert len(p.pSST_CS_soma) == len(p.pSST_CC_soma)
 
-    ################## iterate through different input angles ##################
-    degree_results_vector = [[] for _ in p.pSST_CS_soma]
+    if use_dendrite_model:
+        degree_results_vector = [[] for _ in p.pSST_CS_soma]
+    else:
+        degree_results_vector = [[]]
 
+    ################## iterate through different input angles ##################
     for degree in degrees:
         print(f"Running simulations for input of degree {degree} ...")
         rad = math.radians(degree)
@@ -501,8 +575,8 @@ def run_complete_simulation(params, seed_val=12345):
         params_with_input["I_ext_pv"] = inputs[:, p.N_cs+p.N_cc+p.N_sst:]
 
         results = run_simulation_for_input(params_with_input, seed_val=seed_val,
-                                 use_synaptic_probabilities=True,
-                                 use_dendrite_model=True,
+                                 use_synaptic_probabilities=use_synaptic_probabilities,
+                                 use_dendrite_model=use_dendrite_model,
                                  base_output_folder=f'output/{degree}')
 
 
