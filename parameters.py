@@ -32,7 +32,7 @@ default = {
     "E_e":    0 * mV,  # Excitatory synaptic reversal potential
     "E_i":  -80 * mV,  # Inhibitory synaptic reversal potential
 
-    "V_t":  -50 * mV,  # spiking threashold
+    "V_t":  -50 * mV,  # spiking threshold
     "V_r":  -70 * mV,  # reset potential ~ same as E_l ~
 
     "c_d": 2600 * pA,  # back-propagates somatic spikes to the dendrites

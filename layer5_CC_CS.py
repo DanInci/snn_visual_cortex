@@ -12,11 +12,16 @@ class Struct:
 
 
 def analyse_network_simulation(spike_monitors, state_monitors, synapses, p, output_folder=None):
+    """
+    Does an analysis of a simulation post-run. Saves plots to `output_folder`
+    Returns the results of simulation analysis
+    """
+
     spike_mon_sst, spike_mon_pv, spike_mon_cs, spike_mon_cc = spike_monitors
     state_mon_sst, state_mon_pv, state_mon_cs, state_mon_cc = state_monitors
 
     ################################################################################
-    # Analysis and plotting
+    # Compute equilibrium time of simulation
     ################################################################################
 
     if p.recompute_equilibrium:
@@ -40,6 +45,10 @@ def analyse_network_simulation(spike_monitors, state_monitors, synapses, p, outp
     # Only compute properties of the system from equilibrium time to end simulation time
     from_t = equilibrium_t
     to_t = p.duration
+
+    ################################################################################
+    # Analysis and plotting
+    ################################################################################
 
     raster_from_t = from_t if p.plot_only_from_equilibrium else 0
     raster_to_t = min(raster_from_t + 3 * second, p.duration)
@@ -140,6 +149,11 @@ def analyse_network_simulation(spike_monitors, state_monitors, synapses, p, outp
 
 
 def run_simulation_without_exh_dendrite(network, neurons, synapses, p, base_output_folder, use_synaptic_probabilities):
+    """
+    Runs simulation for network topology with PYR cells having ONLY somas and NO dendrites.
+    Also analyses simulation run and returns results.
+    """
+
     sst_neurons, pv_neurons, cs_neurons, cc_neurons = neurons
 
     E_l = p.E_l  # leak reversal potential
@@ -218,6 +232,13 @@ def run_simulation_without_exh_dendrite(network, neurons, synapses, p, base_outp
 
 
 def run_simulation_for_weighted_sst_soma_dendrite(network, neurons, synapses, p, p_SST_CS_soma, p_SST_CC_soma, base_output_folder, use_synaptic_probabilities):
+    """
+    Runs simulation for network topology with PYR cells having BOTH somas and dendrites.
+    Connection probability of SST->CC/CS Soma is weighted through parameters `p_SST_CS_soma` and `p_SST_CC_soma`
+    Connection probability of SST->CC/CS Dendrite is given by `1 - p_SST_CS_soma` and `1 - p_SST_CC_soma`
+    Also analyses simulation run and returns results.
+    """
+
     sst_neurons, pv_neurons, cs_neurons, cc_neurons = neurons
 
     E_l = p.E_l  # leak reversal potential
@@ -315,13 +336,20 @@ def run_simulation_for_weighted_sst_soma_dendrite(network, neurons, synapses, p,
 
 
 def run_simulation_for_input(params, use_synaptic_probabilities, use_dendrite_model, seed_val, base_output_folder=None):
+    """
+    Given external input and network parameters (through `params`) simulations are run accordingly.
+    If `use_dendrite_model` multiple simulations are run for each (pSST_CS_soma, pSST_CC_soma) pairs
+    If NOT `use_dendrite_model` a single simulation is run.
+    Returns vector of results of simulations
+    """
+
     p = Struct(**params)
 
     start_scope()
     seed(seed_val)
 
     E_l = p.E_l  # leak reversal potential
-    V_t = p.V_t  # spiking threashold
+    V_t = p.V_t  # spiking threshold
 
     assert len(p.pSST_CS_soma) == len(p.pSST_CC_soma)  # since they are taken in pairs
 
@@ -410,7 +438,7 @@ def run_simulation_for_input(params, use_synaptic_probabilities, use_dendrite_mo
     neurons = [sst_neurons, pv_neurons, cs_neurons, cc_neurons]
 
     # ##############################################################################
-    # Define Synapses
+    # Define Synapses (common synapses for simulation)
     # ##############################################################################
 
     synapses = {}
@@ -510,6 +538,10 @@ def run_simulation_for_input(params, use_synaptic_probabilities, use_dendrite_mo
 
     defaultclock.dt = p.sim_dt
 
+    # ##############################################################################
+    # Continue defining specific simulation run
+    # ##############################################################################
+
     results = []
     if use_dendrite_model:
         for p_SST_CS_soma, p_SST_CC_soma in zip(p.pSST_CS_soma, p.pSST_CC_soma):
@@ -532,6 +564,12 @@ def run_simulation_for_input(params, use_synaptic_probabilities, use_dendrite_mo
 
 
 def run_complete_simulation(params, use_dendrite_model=True, use_synaptic_probabilities=True, seed_val=12345):
+    """
+    Runs a complete simulation for given parameters.
+    Computes both individual simulation results and aggregated simulation results.
+    Selectivity of network is calculated through varying external input to neurons.
+    """
+
     p = Struct(**params)
 
     N = [p.N_cs, p.N_cc, p.N_sst, p.N_pv]
