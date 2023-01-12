@@ -8,25 +8,25 @@ N_CS = 45
 default = {
     ### General parameters
     "duration": 3 * second,  # Total simulation time
-    "sim_dt":   0.1 * ms,  # Integrator/sampling step
+    "sim_dt":   0.1 * ms,    # Integrator/sampling step
 
     "N_sst": N_SST,  # Number of SST neurons (inhibitory)
-    "N_pv":  N_PV,  # Number of PV neurons (inhibitory)
-    "N_cc":  N_CC,  # Number of CC neurons (excitatory)
-    "N_cs":  N_CS,  # Number of CS neurons (excitatory)
+    "N_pv":  N_PV,   # Number of PV neurons (inhibitory)
+    "N_cc":  N_CC,   # Number of CC (PYR) neurons (excitatory)
+    "N_cs":  N_CS,   # Number of CS (PYR) neurons (excitatory)
 
     ### Neuron parameters
-    "tau_S":    16 * ms,
-    "tau_D":    7 * ms,
-    "tau_SST":  20 * ms,
-    "tau_PV":   10 * ms,
-    "tau_E":    5 * ms,  # Excitatory synaptic time constant
-    "tau_I":    10 * ms,  # Inhibitory synaptic time constant
+    "tau_S":    16 * ms,   # PYR neuron - soma membrane time constant
+    "tau_D":     7 * ms,   # PYR neuron - dendritic membrane time constant
+    "tau_SST":  20 * ms,   # SST neuron membrane time constant
+    "tau_PV":   10 * ms,   # PV neuron membrane time constant
+    "tau_E":     5 * ms,   # Excitatory synaptic time constant
+    "tau_I":    10 * ms,   # Inhibitory synaptic time constant
 
-    "C_S":      370 * pF,
-    "C_D":      170 * pF,
-    "C_SST":    100 * pF,
-    "C_PV":     100 * pF,
+    "C_S":      370 * pF,  # PYR neuron - soma membrane capacitance
+    "C_D":      170 * pF,  # PYR neuron - dendritic membrane capacitance
+    "C_SST":    100 * pF,  # SST neuron membrane capacitance
+    "C_PV":     100 * pF,  # PV neuron membrane capacitance
 
     "E_l":  -70 * mV,  # leak reversal potential
     "E_e":    0 * mV,  # Excitatory synaptic reversal potential
@@ -35,9 +35,9 @@ default = {
     "V_t":  -50 * mV,  # spiking threashold
     "V_r":  -70 * mV,  # reset potential ~ same as E_l ~
 
-    "c_d": 2600 * pA,  # back-propagates somatic spikes to to the dendrites
+    "c_d": 2600 * pA,  # back-propagates somatic spikes to the dendrites
     "g_s": 1300 * pA,  # propagates dendritic regenerative activity to soma
-    "g_d": 1200 * pA,  # propagates dendritic regenerative activity to denderites
+    "g_d": 1200 * pA,  # propagates dendritic regenerative activity to dendrites
 
     ### Sigmoid function params
     "E_d":  -38 * mV,  # position control of threshold
@@ -47,8 +47,8 @@ default = {
     "wCS_CS":    0.27,
     "pCS_CS":    0.16,
 
-    "wCS_SST":        0.05,
-    "pCS_SST":    0.23,
+    "wCS_SST":   0.05,
+    "pCS_SST":   0.23,
 
     "wCS_PV":    1.01,
     "pCS_PV":    0.18,
@@ -110,5 +110,15 @@ default = {
     "lambda_pv":  10*Hz,
 
     ### Degrees for simulated orientation input
-    "degrees": [0, 90, 180, 270]
+    "degrees": [0, 90, 180, 270],
+
+
+    ### Params for simulation analysis
+    "no_bins_firing_rates":     10,  # Number of bins for firing rates historgram
+    "no_bins_isi":              10,  # Number of bins for interspike intervals historgram
+
+    "plot_only_from_equilibrium":   True,   # Plot graphs only from equilibrium time
+    "plot_connectivity_graph":      False,  # If true, will also plot synapse connectivity graph for each simulation
+    "recompute_equilibrium":        False,  # If true, will try and recompute equilibirum time, if not will use `default_equilibrium_time`
+    "default_equilibrium_t":        0.2 * second  # Default equilibirium time, will be used in case `recompute_equilibrium` is False. Should be set based on previous simulation results
 }
