@@ -6,16 +6,6 @@ import os
 from scipy.signal import argrelextrema
 
 
-# TODO see how to reference this from equations
-@check_units(x=volt, result=1)
-def sigmoid(x):
-    ### Sigmoid function params
-    E_d = -38 * mV  # position control of threshold
-    D_d = 6 * mV  # sharpness control of threshold
-
-    return 1/(1+exp(-(-x-E_d)/D_d))
-
-
 def bin(spiketime, dt):
     if len(spiketime) == 0:
         return []
