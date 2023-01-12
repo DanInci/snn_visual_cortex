@@ -12,21 +12,21 @@ default = {
 
     "N_sst": N_SST,  # Number of SST neurons (inhibitory)
     "N_pv":  N_PV,   # Number of PV neurons (inhibitory)
-    "N_cc":  N_CC,   # Number of CC neurons (excitatory)
-    "N_cs":  N_CS,   # Number of CS neurons (excitatory)
+    "N_cc":  N_CC,   # Number of CC (PYR) neurons (excitatory)
+    "N_cs":  N_CS,   # Number of CS (PYR) neurons (excitatory)
 
     ### Neuron parameters
-    "tau_S":    16 * ms,
-    "tau_D":     7 * ms,
-    "tau_SST":  20 * ms,
-    "tau_PV":   10 * ms,
+    "tau_S":    16 * ms,   # PYR neuron - soma membrane time constant
+    "tau_D":     7 * ms,   # PYR neuron - dendritic membrane time constant
+    "tau_SST":  20 * ms,   # SST neuron membrane time constant
+    "tau_PV":   10 * ms,   # PV neuron membrane time constant
     "tau_E":     5 * ms,   # Excitatory synaptic time constant
     "tau_I":    10 * ms,   # Inhibitory synaptic time constant
 
-    "C_S":      370 * pF,
-    "C_D":      170 * pF,
-    "C_SST":    100 * pF,
-    "C_PV":     100 * pF,
+    "C_S":      370 * pF,  # PYR neuron - soma membrane capacitance
+    "C_D":      170 * pF,  # PYR neuron - dendritic membrane capacitance
+    "C_SST":    100 * pF,  # SST neuron membrane capacitance
+    "C_PV":     100 * pF,  # PV neuron membrane capacitance
 
     "E_l":  -70 * mV,  # leak reversal potential
     "E_e":    0 * mV,  # Excitatory synaptic reversal potential
