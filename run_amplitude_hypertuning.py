@@ -64,6 +64,8 @@ def run_input_amplitude_simulation(params, input_amplitudes, seed_val=12345):
 
 
 def test_input_amplitudes(params, csv_writer=None, seed_val=12345):
+
+    # combinatorically run simulations for the following neuron type amplitudes
     input_cs_amplitudes = [100]
     input_cc_amplitudes = [100, 200, 300]
     input_sst_amplitudes = [10, 25, 50, 75, 100]

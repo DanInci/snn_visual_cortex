@@ -30,6 +30,10 @@ def bin(spiketime, dt):
 
 
 def count_spikes_for_neuron_type(spike_mon, from_t=None, to_t=None):
+    """
+    Computes spike count by neuron for all neurons monitored by a spike monitor between given interval of time
+    """
+
     spike_counts = {}
 
     for index in spike_mon.spike_trains():
@@ -45,6 +49,10 @@ def count_spikes_for_neuron_type(spike_mon, from_t=None, to_t=None):
 
 @check_units(sim_duration=ms)
 def compute_firing_rate_for_neuron_type(spike_mon, from_t, to_t):
+    """
+    Computes firing rate by neuron for all neurons monitored by a spike monitor between given interval of time
+    """
+
     spikes_for_i = count_spikes_for_neuron_type(spike_mon, from_t, to_t)
     duration = to_t - from_t
 
@@ -52,6 +60,10 @@ def compute_firing_rate_for_neuron_type(spike_mon, from_t, to_t):
 
 
 def compute_interspike_intervals(spike_mon, from_t, to_t):
+    """
+    Computes inter-spike intervals by neuron for all neurons monitored by a spike monitor between given interval of time
+    """
+
     by_neuron = []
 
     for neuron_index in spike_mon.spike_trains():
@@ -65,6 +77,10 @@ def compute_interspike_intervals(spike_mon, from_t, to_t):
 
 
 def compute_autocorr(spike_intervals):
+    """
+    Computes auto-correlation function on the inter-spike intervals
+    """
+
     if len(spike_intervals) == 0:
         return None, None
 
@@ -75,6 +91,10 @@ def compute_autocorr(spike_intervals):
 
 
 def find_minimum_autocorr(acorr):
+    """
+    Finds the minimum of the auto-correlation function given by acorr
+    """
+
     if acorr is None:
         return None
 
@@ -93,6 +113,10 @@ def find_minimum_autocorr(acorr):
 
 
 def compute_autocorr_struct(interspike_intervals, no_bins):
+    """
+    Helper method for computing all relevant auto-correlation metrics for inter-spike intervals given
+    """
+
     autocorr_sst = None
 
     sorted_isi = np.sort(interspike_intervals)
@@ -110,6 +134,12 @@ def compute_autocorr_struct(interspike_intervals, no_bins):
 
 
 def compute_equilibrium_for_neuron_type(spike_mon, time_frame=0.05, tol=0.001):
+    """
+    Computes equilibrium time for a group of neurons monitored by a spike monitor.
+    It does that by using a sliding window algorithm of `time_frame` and
+    checking if firing rate of neurons has changed between 2 consecutive time windows
+    """
+
     t = 0
     last_spike_t = spike_mon.t[-1] / second if len(spike_mon.t) > 0 else t
 
@@ -128,6 +158,12 @@ def compute_equilibrium_for_neuron_type(spike_mon, time_frame=0.05, tol=0.001):
 
 
 def compute_burst_mask(spikes, maxISI):
+    """
+    Computes a burst mask for the spikes of a given neuron.
+    A spike is said to be in a burst if the inter-spike interval time is less than maxISI
+    Returns a binary vector. 1 means spike is in a burst. 0 means is not
+    """
+
     isi = np.diff(spikes)
     mask = np.zeros(len(spikes))
 
@@ -140,6 +176,10 @@ def compute_burst_mask(spikes, maxISI):
 
 
 def compute_burst_trains(spike_mon, maxISI):
+    """
+    Computes a burst mask for each neuron monitored by the spike_mon
+    """
+
     burst_trains = {}
     for neuron_index in spike_mon.spike_trains():
         burst_mask = compute_burst_mask(spike_mon.spike_trains()[neuron_index], maxISI)
@@ -149,7 +189,11 @@ def compute_burst_trains(spike_mon, maxISI):
 
 
 def compute_burst_lengths(burst_mask):
-    "count how many series of consecutive occurances of 1 appear"
+    """
+    Given a burst mask which is iterated, a burst is defined as series of consecutive occurrences of 1.
+    Each of these series is considered a burst and has an associated burst length.
+    Returns a vector of bursts lengths.
+    """
 
     burst_lengths = []
     idx = 0
@@ -180,6 +224,10 @@ def compute_burst_lengths_by_neuron_group(burst_trains):
 
 
 def save_agg_results_to_folder(results, output_folder=None, file_name='results.json'):
+    """
+    Helper method for saving aggregated results for multiple simulations with different degree inputs to folder
+    """
+
     if output_folder is not None:
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
@@ -190,6 +238,10 @@ def save_agg_results_to_folder(results, output_folder=None, file_name='results.j
 
 
 def save_results_to_folder(results, output_folder=None, file_name='results.json'):
+    """
+    Helper method for saving individual simulation results to folder
+    """
+
     if output_folder is not None:
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
