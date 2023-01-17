@@ -50,18 +50,18 @@ def analyse_network_simulation(spike_monitors, state_monitors, synapses, p, outp
     # Analysis and plotting
     ################################################################################
 
-    raster_from_t = max(max(from_t, to_t - 3 * second), 0)
-    raster_to_t = to_t
-    plot_raster(spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv, raster_from_t, raster_to_t,
+    plot_from_t = max(max(from_t, to_t - 3 * second), 0)
+    plot_to_t = to_t
+    plot_raster(spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv, plot_from_t, plot_to_t,
                 output_folder=output_folder, file_name='spike_raster_plot')
 
-    plot_states(state_mon_cs, spike_mon_cs, p.V_t, from_t, to_t,
+    plot_states(state_mon_cs, spike_mon_cs, p.V_t, plot_from_t, plot_to_t,
                 output_folder=output_folder, file_name='state_plot_CS')
-    plot_states(state_mon_cc, spike_mon_cc, p.V_t, from_t, to_t,
+    plot_states(state_mon_cc, spike_mon_cc, p.V_t, plot_from_t, plot_to_t,
                 output_folder=output_folder, file_name='state_plot_CC')
-    plot_states(state_mon_sst, spike_mon_sst, p.V_t, from_t, to_t,
+    plot_states(state_mon_sst, spike_mon_sst, p.V_t, plot_from_t, plot_to_t,
                 output_folder=output_folder, file_name='state_plot_SST')
-    plot_states(state_mon_pv, spike_mon_pv, p.V_t, from_t, to_t,
+    plot_states(state_mon_pv, spike_mon_pv, p.V_t, plot_from_t, plot_to_t,
                 output_folder=output_folder, file_name='state_plot_PV')
 
     # Plot connectivity graph
