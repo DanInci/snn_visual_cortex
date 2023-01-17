@@ -69,7 +69,7 @@ def plot_raster(spike_mon_cs, spike_mon_cc, spike_mon_sst, spike_mon_pv, from_t=
 
 
 def plot_states(state_mon, spike_mon, spike_thld,
-                plot_only_from_equilibrium=False, from_t=None, to_t=None,
+                from_t=None, to_t=None,
                 output_folder=None, file_name='state_plot', record=0):
     """ Plots the variable states for a monitor """
 
@@ -88,9 +88,7 @@ def plot_states(state_mon, spike_mon, spike_thld,
     axs[0].set_xlabel('Time (ms)')
     axs[0].set_ylabel('potential (V)')
     axs[0].legend(loc='upper right')
-
-    if plot_only_from_equilibrium:
-        axs[0].set_xlim(left=from_t / ms, right=to_t / ms)
+    axs[0].set_xlim(left=from_t / ms, right=to_t / ms)
 
     # plot conductance
     gs = [g for g in state_mon.record_variables if g.startswith('g')]
@@ -100,9 +98,7 @@ def plot_states(state_mon, spike_mon, spike_thld,
     axs[1].set_xlabel('Time (ms)')
     axs[1].set_ylabel('Conductance (S)')
     axs[1].legend(loc='best')
-
-    if plot_only_from_equilibrium:
-        axs[1].set_xlim(left=from_t / ms, right=to_t / ms)
+    axs[1].set_xlim(left=from_t / ms, right=to_t / ms)
 
     if output_folder is not None:
         if not os.path.exists(output_folder):

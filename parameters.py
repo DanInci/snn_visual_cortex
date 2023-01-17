@@ -7,7 +7,7 @@ N_CS = 45
 
 default = {
     ### General parameters
-    "duration": 3 * second,  # Total simulation time
+    "duration": 5 * second,  # Total simulation time
     "sim_dt":   0.1 * ms,    # Integrator/sampling step
 
     "N_sst": N_SST,  # Number of SST neurons (inhibitory)
@@ -117,8 +117,7 @@ default = {
     "no_bins_firing_rates":     10,  # Number of bins for firing rates historgram
     "no_bins_isi":              10,  # Number of bins for interspike intervals historgram
 
-    "plot_only_from_equilibrium":   True,   # Plot graphs only from equilibrium time
-    "plot_connectivity_graph":      False,  # If true, will also plot synapse connectivity graph for each simulation
+    "plot_connectivity_graph":      True,  # If true, will also plot synapse connectivity graph for each simulation
     "recompute_equilibrium":        False,  # If true, will try and recompute equilibirum time, if not will use `default_equilibrium_time`
     "default_equilibrium_t":        0.2 * second  # Default equilibirium time, will be used in case `recompute_equilibrium` is False. Should be set based on previous simulation results
 }
