@@ -33,7 +33,6 @@ default = {
     "E_i":  -80 * mV,  # Inhibitory synaptic reversal potential
 
     "V_t":  -50 * mV,  # spiking threshold
-    "V_r":  -70 * mV,  # reset potential ~ same as E_l ~
 
     "c_d": 2600 * pA,  # back-propagates somatic spikes to the dendrites
     "g_s": 1300 * pA,  # propagates dendritic regenerative activity to soma
@@ -59,7 +58,7 @@ default = {
     "pSST_CS_soma":   [0.5, 0.5,   1,  1],  # represents fraction of `pSST_CS*pSST_CS_weight` going to the CS soma; {1-this} goes to CS dendrite
     # `pSST_CS_soma` and `pSST_CC_soma` are taken in pairs
     "pSST_CC_soma":   [0.5,   1, 0.5,  1],   # represents fraction of `pSST_CC*pSST_CC_weight` going to the CC soma;  {1-this} goes to CC dendrite
-    "wSST_CC": 0.19,
+    "wSST_CC": 0.11,
     "pSST_CC": 0.13,
     "pSST_CC_weight": 1,  # represents fraction of `pSST_CC` for connection probabilities
 
