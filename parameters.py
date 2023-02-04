@@ -7,7 +7,7 @@ N_CS = 45
 
 default = {
     ### General parameters
-    "duration": 5 * second,  # Total simulation time
+    "duration": 10 * second,  # Total simulation time
     "sim_dt":   0.1 * ms,    # Integrator/sampling step
 
     "N_sst": N_SST,  # Number of SST neurons (inhibitory)
@@ -20,8 +20,8 @@ default = {
     "tau_D":     7 * ms,   # PYR neuron - dendritic membrane time constant
     "tau_SST":  20 * ms,   # SST neuron membrane time constant
     "tau_PV":   10 * ms,   # PV neuron membrane time constant
-    "tau_E":     5 * ms,   # Excitatory synaptic time constant
-    "tau_I":    10 * ms,   # Inhibitory synaptic time constant
+    "tau_E":     1 * ms,   # Excitatory synaptic time constant
+    "tau_I":     5 * ms,   # Inhibitory synaptic time constant
 
     "C_S":      370 * pF,  # PYR neuron - soma membrane capacitance
     "C_D":      170 * pF,  # PYR neuron - dendritic membrane capacitance
@@ -30,7 +30,7 @@ default = {
 
     "E_l":  -70 * mV,  # leak reversal potential
     "E_e":    0 * mV,  # Excitatory synaptic reversal potential
-    "E_i":  -80 * mV,  # Inhibitory synaptic reversal potential
+    "E_i":  -70 * mV,  # Inhibitory synaptic reversal potential
 
     "V_t":  -50 * mV,  # spiking threshold
 
@@ -114,7 +114,7 @@ default = {
 
     ### Params for simulation analysis
     "no_bins_firing_rates":     10,  # Number of bins for firing rates historgram
-    "no_bins_isi":              10,  # Number of bins for interspike intervals historgram
+    "no_bins_isi":              16,  # Number of bins for interspike intervals historgram
 
     "plot_connectivity_graph":      True,  # If true, will also plot synapse connectivity graph for each simulation
     "recompute_equilibrium":        False,  # If true, will try and recompute equilibirum time, if not will use `default_equilibrium_time`
