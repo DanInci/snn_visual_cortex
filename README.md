@@ -35,3 +35,6 @@ After that, activate the environment with `conda activate network`
 - The project includes a script for hypertuning different input amplitudes for neuron groups. Can be run by `python3 run_amplitude_hypertuning.py`
 - All simulation outputs are persisted in the `output` folder. I recommend deleting the content between successive runs to avoid confusion.
 - Parallelization of simulations is missing. This would be a much needed improvement for the future.
+
+### Project Report
+- For more details and documentation about the project scope, the [report](./report/Project_Report.pdf) can be consulted.
